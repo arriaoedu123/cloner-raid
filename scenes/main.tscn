@@ -17,6 +17,10 @@
 [ext_resource type="Script" path="res://scripts/pause_menu.gd" id="15_pause"]
 [ext_resource type="Script" path="res://scripts/options_menu.gd" id="16_options"]
 [ext_resource type="PackedScene" path="res://scenes/power_up.tscn" id="17_power_up"]
+[ext_resource type="PackedScene" path="res://scenes/speedboat.tscn" id="18_speedboat"]
+[ext_resource type="PackedScene" path="res://scenes/mine.tscn" id="19_mine"]
+[ext_resource type="PackedScene" path="res://scenes/submarine.tscn" id="20_submarine"]
+[ext_resource type="PackedScene" path="res://scenes/hovercraft.tscn" id="21_hovercraft"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 shader = ExtResource("13_water_shader")
@@ -26,6 +30,10 @@ script = ExtResource("1_main")
 helicopter_scene = ExtResource("2_helicopter")
 ship_scene = ExtResource("9_ship")
 jet_scene = ExtResource("10_jet")
+speedboat_scene = ExtResource("18_speedboat")
+mine_scene = ExtResource("19_mine")
+submarine_scene = ExtResource("20_submarine")
+hovercraft_scene = ExtResource("21_hovercraft")
 bridge_scene = ExtResource("11_bridge")
 fuel_depot_scene = ExtResource("6_fuel_depot")
 power_up_scene = ExtResource("17_power_up")

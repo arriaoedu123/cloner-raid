@@ -14,6 +14,7 @@ const LIFE_ICONS := {
 }
 const MARGIN := 8.0
 const BAR := Vector2(34, 4)  # barrinhas de tempo (combo e power-ups)
+const GAME_OVER_PANEL := Vector2(260, 146)  # pontos + recorde, divisória e 2 opções
 
 
 func _process(_delta: float) -> void:
@@ -180,21 +181,28 @@ func _draw_combo(screen: Vector2) -> void:
 	draw_rect(Rect2(bar_pos + Vector2.ONE, Vector2(fill, BAR.y - 2.0)), Palette.YELLOW)
 
 
-func _draw_game_over(screen: Vector2) -> void:
-	var cx := screen.x / 2.0
-	var cy := screen.y / 2.0
-	draw_rect(Rect2(0, cy - 44, screen.x, 108), Color(Palette.OUTLINE, 0.75))
-	PixelText.draw_centered(self, "FIM DE JOGO", cx, cy - 34, 3)
+## Fim de jogo: painel de madeira como os menus, com os pontos (e o recorde, ou os pontos de cada
+## um no coop com pontos separados) e as opções de game.game_over_items().
+func _draw_game_over(_screen: Vector2) -> void:
+	var top_left := MenuStyle.panel(self, GAME_OVER_PANEL, "FIM DE JOGO")
+	var cx := top_left.x + GAME_OVER_PANEL.x / 2.0
+	var y := top_left.y + MenuStyle.CONTENT_TOP
 	if game.boards.size() > 1:
-		# pontos separados: sem recorde, só o placar de cada um
-		PixelText.draw_centered(self, "J1 %06d   J2 %06d" % [game.boards[0].score, game.boards[1].score], cx, cy)
+		# pontos separados: sem recorde, só o placar de cada um, na cor de cada avião
+		PixelText.draw_centered(self, "J1 %06d" % game.boards[0].score, cx, y, 1, Palette.YELLOW_LIGHT)
+		PixelText.draw_centered(self, "J2 %06d" % game.boards[1].score, cx, y + 18.0, 1, Palette.LILAC_LIGHT)
 	else:
-		PixelText.draw_centered(self, "PONTOS %06d" % game.score, cx, cy)
+		PixelText.draw_centered(self, "PONTOS %06d" % game.score, cx, y)
 		if game.is_new_record:
 			if Time.get_ticks_msec() % 500 < 300:
-				PixelText.draw_centered(self, "NOVO RECORDE!", cx, cy + 13)
+				PixelText.draw_centered(self, "NOVO RECORDE!", cx, y + 18.0, 1, MenuStyle.SELECTED)
 		else:
-			PixelText.draw_centered(self, "RECORDE %06d" % game.high_score, cx, cy + 13)
-	# teclas com borda: linhas a 18 px uma da outra para as bordas não encostarem
-	PixelText.draw_centered(self, "[%s] PARA JOGAR DE NOVO" % InputHint.name_of(&"shoot"), cx, cy + 30)
-	PixelText.draw_centered(self, "[%s] PARA O MENU" % InputHint.back(), cx, cy + 48)
+			PixelText.draw_centered(self, "RECORDE %06d" % game.high_score, cx, y + 18.0, 1, MenuStyle.SOFT)
+	MenuStyle.divider(self, top_left.x + 20.0, top_left.x + GAME_OVER_PANEL.x - 20.0, y + 36.0)
+	var items := game.game_over_items()
+	var row_y := y + 46.0
+	if items.size() == 1:  # convidado online: quem recomeça é o anfitrião
+		PixelText.draw_centered(self, "ESPERANDO O ANFITRIÃO...", cx, row_y, 1, MenuStyle.SOFT)
+		row_y += 22.0
+	for i in items.size():
+		MenuStyle.item(self, items[i], cx, row_y + i * 22.0, i == game.game_over_selected)

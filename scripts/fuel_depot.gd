@@ -13,6 +13,8 @@ extends Area2D
 
 ## Emitido quando é destruído por um tiro
 signal shot_down(points: int)
+## Emitido ao explodir (online: o outro computador repete a explosão)
+signal destroyed
 
 var is_destroyed := false
 ## Avião que destruiu o posto (no coop com pontos separados, o combo quebrado é o dele)
@@ -25,7 +27,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	for area in get_overlapping_areas():
-		if area is Player:
+		# online: o combustível do avião remoto é contado no computador dele
+		if area is Player and not (area as Player).remote:
 			(area as Player).add_fuel(refuel_rate * delta)
 
 
@@ -33,6 +36,8 @@ func _on_area_entered(area: Area2D) -> void:
 	if area is PlayerBullet:
 		killer = (area as PlayerBullet).shooter
 		area.queue_free()
+		if Game.is_online_client():
+			return  # online, só o anfitrião decide os acertos
 		if not is_destroyed:
 			shot_down.emit(points)
 		destroy()
@@ -46,4 +51,5 @@ func destroy() -> void:
 	Effects.shake(self, 2.0, 0.25, killer)
 	Effects.hit_stop(self, 0.03)
 	Sfx.play("explosion_small", 0.0, 1.0, 0.08)
+	destroyed.emit()
 	queue_free()

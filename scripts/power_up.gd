@@ -28,6 +28,9 @@ const NAMES := {
 ## Cena criada no lugar da caixa quando ela leva um tiro
 @export var explosion_scene: PackedScene
 
+## Emitido quando some (pega ou explodida). Online: o outro computador repete.
+signal destroyed(exploded: bool)
+
 var is_destroyed := false
 
 
@@ -38,15 +41,26 @@ func _ready() -> void:
 func _on_area_entered(area: Area2D) -> void:
 	if is_destroyed:
 		return
-	if area is Player and not (area as Player).is_dead:
-		is_destroyed = true
+	# online: a caixa pega pelo avião remoto é decidida no computador dele
+	if area is Player and not (area as Player).is_dead and not (area as Player).remote:
 		(area as Player).give_power_up(kind)
 		Sfx.play("extra_life" if kind == Kind.LIFE else "power_up")
-		queue_free()
+		vanish(false)
 	elif area is PlayerBullet:
 		area.queue_free()
-		is_destroyed = true
-		Effects.spawn(explosion_scene, global_position, get_parent())
+		if Game.is_online_client():
+			return  # online, só o anfitrião decide os acertos
 		Effects.shake(self, 2.0, 0.25, (area as PlayerBullet).shooter)
+		vanish(true)
+
+
+## Some: pega (`exploded` falso) ou destruída por tiro (com explosão e som).
+func vanish(exploded: bool) -> void:
+	if is_destroyed:
+		return
+	is_destroyed = true
+	if exploded:
+		Effects.spawn(explosion_scene, global_position, get_parent())
 		Sfx.play("explosion_small", 0.0, 1.0, 0.08)
-		queue_free()
+	destroyed.emit(exploded)
+	queue_free()

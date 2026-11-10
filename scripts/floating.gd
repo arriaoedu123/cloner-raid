@@ -9,7 +9,8 @@ const BOB_STEP_MS := 500
 ## Espuma anda 1 px no mesmo ritmo da espuma das margens
 const FOAM_STEP_MS := River.FOAM_STEP_MS
 
-## Sprite que balança (a espuma segue o contorno da textura dele)
+## Sprite que balança (a espuma segue o contorno da textura dele). Pode ser um Sprite2D ou um
+## AnimatedSprite2D (mina): nesse caso usa o 1º frame, então os frames precisam ter o mesmo contorno.
 @export var sprite_path: NodePath = ^"../Sprite2D"
 
 ## Pixels de água colados em cada desenho (calculado uma vez por textura)
@@ -17,13 +18,15 @@ static var _foam_cache := {}
 
 var _foam_points := PackedVector2Array()
 
-@onready var sprite: Sprite2D = get_node(sprite_path)
+@onready var sprite: Node2D = get_node(sprite_path)
 
 
 func _ready() -> void:
-	if not _foam_cache.has(sprite.texture):
-		_foam_cache[sprite.texture] = _outline_points(sprite.texture)
-	_foam_points = _foam_cache[sprite.texture]
+	var texture: Texture2D = sprite.sprite_frames.get_frame_texture(sprite.animation, 0) \
+			if sprite is AnimatedSprite2D else sprite.texture
+	if not _foam_cache.has(texture):
+		_foam_cache[texture] = _outline_points(texture)
+	_foam_points = _foam_cache[texture]
 
 
 func _process(_delta: float) -> void:

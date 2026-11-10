@@ -28,6 +28,10 @@ const NECK_APPROACH := 56
 const ISLAND_CALM_ROWS := 30
 ## A cada quantos ms o tracejado da espuma anda 1 px
 const FOAM_STEP_MS := 250
+## Base da linha 0 no mundo. FIXA, não depende da altura da tela: no online os dois
+## computadores precisam do rio nas mesmas coordenadas (uma tela 16:10 tem 400 px de altura
+## e uma 16:9, 360). 440 cobre o fundo da tela no começo até telas 4:3.
+const START_Y := 440.0
 ## Sombra da terra na água (luz de cima: cai para a direita e para baixo; margem é baixa)
 const LAND_SHADOW := Vector2(2, 3)
 
@@ -98,7 +102,7 @@ var island_rs: Array[float] = []
 ## Enfeites de cada linha: lista de Vector2(tipo, x)
 var decors: Array[Array] = []
 var first_index := 0  # índice da linha guardada em lefts[0]
-var start_y := 0.0    # base (y de baixo) da linha 0
+var start_y := START_Y  # base (y de baixo) da linha 0
 
 var _target_left := 0.0
 var _target_right := 0.0
@@ -115,7 +119,6 @@ var _screen_w := 640.0
 func _ready() -> void:
 	add_to_group("river")
 	_screen_w = get_viewport_rect().size.x
-	start_y = get_viewport_rect().size.y + 40.0
 	base_seed = randi()
 	_update_rows.call_deferred()
 
@@ -219,7 +222,7 @@ func _update_rows() -> void:
 	var camera := get_viewport().get_camera_2d()
 	if camera == null:
 		return
-	var view_h := get_viewport_rect().size.y
+	var view_h := Game.view_h_max(self)  # online: a tela mais alta dos dois (os objetos nascem juntos)
 	# global_position (e não get_screen_center_position) porque no 1º frame o centro
 	# da tela ainda não foi atualizado e as linhas de baixo seriam descartadas
 	var top := camera.global_position.y - view_h / 2.0

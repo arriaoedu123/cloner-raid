@@ -9,7 +9,6 @@ signal closed     ## voltou sem começar
 
 const ITEMS: Array[String] = ["JOGADOR 1", "JOGADOR 2", "COMEÇAR", "VOLTAR"]
 const PANEL := Vector2(300, 150)
-const ARROW_GAP := 11.0  # largura da seta (7 px) + 4 px de espaço até o valor
 const LIFE_ICONS := {
 	0: preload("res://assets/sprites/hud/life.png"),
 	1: preload("res://assets/sprites/hud/life_p2.png"),
@@ -104,30 +103,22 @@ func _device_name(device: int) -> String:
 
 
 func _draw() -> void:
-	var screen := get_viewport_rect().size
-	var top_left := ((screen - PANEL) / 2.0).floor()
-	draw_rect(Rect2(Vector2.ZERO, screen), Color(Palette.OUTLINE, 0.55))
-	draw_rect(Rect2(top_left, PANEL), Palette.OUTLINE)
-	draw_rect(Rect2(top_left + Vector2.ONE, PANEL - Vector2(2, 2)), Palette.BLUE_DARK)
-
-	var cx := screen.x / 2.0
-	PixelText.draw_centered(self, "2 JOGADORES", cx, top_left.y + 12, 2)
-	var arrows_on := Time.get_ticks_msec() % 600 < 400
+	var top_left := MenuStyle.panel(self, PANEL, "2 JOGADORES")
+	var cx := top_left.x + PANEL.x / 2.0
+	var right := top_left.x + PANEL.x - 18.0
+	var y := top_left.y + MenuStyle.CONTENT_TOP
 	for i in ITEMS.size():
-		var y := top_left.y + 46.0 + i * 22.0
 		var label := ITEMS[i]
-		var show_arrows := i == selected and arrows_on
-		if i > 1:  # botões
-			var text := ("> " + label + " <") if show_arrows else ("  " + label + "  ")
-			PixelText.draw_centered(self, text, cx, y)
-			continue
-		# aviãozinho da cor do jogador + nome; dispositivo à direita, entre setas
-		draw_texture(LIFE_ICONS[i], Vector2(top_left.x + 18, y - 1.0))
-		PixelText.draw(self, label, Vector2(top_left.x + 34, y))
-		var right := top_left.x + PANEL.x - 18
-		var value := _device_name(devices[i])
-		var value_left := right - ARROW_GAP - PixelText.width(value)
-		PixelText.draw(self, value, Vector2(value_left, y))
-		if show_arrows:
-			PixelText.draw(self, "<", Vector2(value_left - ARROW_GAP, y))
-			PixelText.draw(self, ">", Vector2(right - PixelText.CELL.x, y))
+		var chosen := i == selected
+		if i > 1:  # botões, separados dos jogadores por uma divisória
+			if i == 2:
+				MenuStyle.divider(self, top_left.x + 18.0, right, y - 4.0)
+				y += 6.0
+			MenuStyle.item(self, label, cx, y, chosen)
+		else:
+			# aviãozinho da cor do jogador + nome; dispositivo à direita, numa caixinha
+			draw_texture(LIFE_ICONS[i], Vector2(top_left.x + 18, y - 1.0))
+			PixelText.draw(self, label, Vector2(top_left.x + 34, y), 1,
+					MenuStyle.SELECTED if chosen else Color.WHITE)
+			MenuStyle.value(self, _device_name(devices[i]), right - MenuStyle.ARROW_ROOM, y, chosen)
+		y += 22.0

@@ -1,7 +1,7 @@
 class_name PixelText
 ## Escreve texto com a fonte pixel art do jogo (assets/sprites/hud/font.png).
 ## Use dentro de _draw(): PixelText.draw(self, "TEXTO", posicao, escala)
-## Só maiúsculas, números, " -:.!><" e os acentuados Ç, Õ, Ã. Minúsculas viram maiúsculas.
+## Só maiúsculas, números, " -:.!><" e os acentuados Ç, Õ, Ã, Ó. Minúsculas viram maiúsculas.
 ## A posição `pos` é o topo do CORPO da letra (a altura de texto continua 9 px); o til sobe
 ## acima disso e a cedilha desce abaixo.
 ## Teclas: texto entre [ ] ganha uma "tecla" em volta (fundo escuro, borda clara arredondada e
@@ -9,7 +9,7 @@ class_name PixelText
 ## A tecla ocupa 3 px acima e 4 abaixo do corpo (cabe a cedilha): linhas com tecla precisam
 ## de pelo menos 17 px entre si.
 
-const CHARSET := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -:.!><ÇÕÃ"  # mesma ordem de tools/sprites/hud.py
+const CHARSET := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -:.!><ÇÕÃÓ"  # mesma ordem de tools/sprites/hud.py
 const CELL := Vector2(7, 14)  # célula no atlas: 3 px de acento + corpo 9 px + 2 px de cedilha
 const ASCENT := 3.0           # px da célula acima do corpo (onde fica o til)
 const BODY_H := 9.0           # altura do corpo com contorno: use para alinhar texto
@@ -24,7 +24,9 @@ static func width(text: String, scale: int = 1) -> float:
 	return _layout(text)[2] * scale
 
 
-static func draw(canvas: CanvasItem, text: String, pos: Vector2, scale: int = 1) -> void:
+## `color` tinge as letras (o contorno k continua escuro); as teclas não mudam de cor.
+static func draw(canvas: CanvasItem, text: String, pos: Vector2, scale: int = 1,
+		color := Color.WHITE) -> void:
 	var layout := _layout(text)
 	for key: Vector2 in layout[1]:
 		var box := Rect2(pos.x + key.x * scale, pos.y - KEY_TOP * scale,
@@ -41,7 +43,7 @@ static func draw(canvas: CanvasItem, text: String, pos: Vector2, scale: int = 1)
 		var src := Rect2(Vector2(glyph[0] * CELL.x, 0), CELL)
 		# sobe ASCENT para o corpo da letra ficar em `pos.y` (o acento fica acima)
 		var dest := Rect2(Vector2(pos.x + glyph[1] * scale, pos.y - ASCENT * scale), CELL * scale)
-		canvas.draw_texture_rect_region(ATLAS, dest, src)
+		canvas.draw_texture_rect_region(ATLAS, dest, src, color)
 
 
 ## Onde vai cada letra e cada tecla, em escala 1 a partir de x = 0:
@@ -76,21 +78,5 @@ static func _layout(text: String) -> Array:
 
 ## Desenha centralizado horizontalmente em `center_x`.
 static func draw_centered(canvas: CanvasItem, text: String, center_x: float, y: float,
-		scale: int = 1) -> void:
-	draw(canvas, text, Vector2(roundf(center_x - width(text, scale) / 2.0), y), scale)
-
-
-## Menu vertical: cada opção tem uma linha com CENTRO em `first_center_y + i * spacing`.
-## A escolhida fica `selected_scale` vezes maior, com setas piscando dos lados, e cresce igual
-## para cima e para baixo (o menu fica simétrico). Usado pelo título e pela pausa.
-static func draw_menu(canvas: CanvasItem, items: Array[String], selected: int, center_x: float,
-		first_center_y: float, spacing: float, selected_scale: int = 2) -> void:
-	var arrows_on := Time.get_ticks_msec() % 600 < 400
-	for i in items.size():
-		var text := items[i]
-		var scale := 1
-		if i == selected:
-			scale = selected_scale
-			text = ("> " + text + " <") if arrows_on else ("  " + text + "  ")
-		var line_center := first_center_y + i * spacing
-		draw_centered(canvas, text, center_x, roundf(line_center - BODY_H * scale / 2.0), scale)
+		scale: int = 1, color := Color.WHITE) -> void:
+	draw(canvas, text, Vector2(roundf(center_x - width(text, scale) / 2.0), y), scale, color)

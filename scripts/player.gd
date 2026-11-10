@@ -64,6 +64,8 @@ signal died
 signal refueled
 ## Emitido ao pegar uma caixa de power-up
 signal power_up_taken(kind: PowerUp.Kind)
+## Emitido a cada disparo, com o deslocamento x de cada tiro (online: o outro computador repete)
+signal fired(offsets: Array)
 
 ## Jogador dono do avião: 1 (amarelo) ou 2 (lilás, só no coop). Ver setup_player().
 var number := 1
@@ -76,6 +78,9 @@ var lives := 0
 var is_out := false
 ## Caiu e já gastou uma vida: espera a hora de renascer
 var waiting_respawn := false
+## Online: avião pilotado pelo OUTRO computador. Não lê comandos nem testa margem/combustível;
+## posição, animação e power-ups chegam pela rede (apply_remote_state).
+var remote := false
 
 var is_dead := false
 var invulnerable_timer := 0.0
@@ -124,7 +129,37 @@ func _action(base: String) -> StringName:
 	return StringName(input_prefix + base)
 
 
+## Eixo de comando (-1..1). Online com o menu de pausa aberto: 0 (o avião segue sem comandos).
+func _axis(negative: String, positive: String) -> float:
+	if Game.input_blocked:
+		return 0.0
+	return Input.get_axis(_action(negative), _action(positive))
+
+
+## Online: estado do avião remoto, mandado pelo computador dono dele.
+func apply_remote_state(pos: Vector2, anim: StringName, blink_visible: bool, shield: float,
+		double_shot: float, fuel_left: float, speed: float) -> void:
+	position = pos
+	forward_speed = speed  # os tiros dele somam essa velocidade
+	if sprite.animation != anim:
+		sprite.play(anim)
+	sprite.visible = blink_visible
+	shield_timer = shield
+	double_shot_timer = double_shot
+	fuel = fuel_left
+
+
+## Online: o avião remoto atirou no outro computador; aqui só aparecem os tiros.
+func fire_remote(offsets: Array) -> void:
+	_spawn_bullets(offsets)
+
+
 func _physics_process(delta: float) -> void:
+	if remote:
+		# só a parte visual: rastro do motor, fumaça e anel do escudo
+		_update_exhaust()
+		shield_ring.visible = shield_timer > 3.0 or (shield_timer > 0.0 and int(shield_timer * 8.0) % 2 == 0)
+		return
 	_move_forward(delta)
 	_move_sideways(delta)
 
@@ -140,7 +175,7 @@ func _physics_process(delta: float) -> void:
 	# anel do escudo; pisca nos últimos 3 s para avisar que vai acabar
 	shield_ring.visible = shield_timer > 3.0 or (shield_timer > 0.0 and int(shield_timer * 8.0) % 2 == 0)
 	fire_timer -= delta
-	if Input.is_action_pressed(_action("shoot")) and fire_timer <= 0.0:
+	if not Game.input_blocked and Input.is_action_pressed(_action("shoot")) and fire_timer <= 0.0:
 		_shoot()
 
 	if invulnerable_timer > 0.0:
@@ -259,7 +294,7 @@ func _touching_land() -> bool:
 
 
 func _move_forward(delta: float) -> void:
-	var throttle := Input.get_axis(_action("slow_down"), _action("speed_up"))
+	var throttle := _axis("slow_down", "speed_up")
 	var target := cruise_speed
 	if throttle > 0.0:
 		target = lerpf(cruise_speed, max_speed, throttle)
@@ -271,7 +306,7 @@ func _move_forward(delta: float) -> void:
 
 
 func _move_sideways(delta: float) -> void:
-	var direction := Input.get_axis(_action("move_left"), _action("move_right"))
+	var direction := _axis("move_left", "move_right")
 
 	velocity_x = move_toward(velocity_x, direction * side_speed, side_acceleration * delta)
 	position.x += velocity_x * delta
@@ -288,6 +323,11 @@ func _shoot() -> void:
 	var offsets := [0.0]
 	if double_shot_timer > 0.0:
 		offsets = [-double_shot_spread, double_shot_spread]
+	_spawn_bullets(offsets)
+	fired.emit(offsets)
+
+
+func _spawn_bullets(offsets: Array) -> void:
 	for dx: float in offsets:
 		var bullet: PlayerBullet = bullet_scene.instantiate()
 		bullet.global_position = muzzle.global_position + Vector2(dx, 0)

@@ -1,0 +1,62 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/mine/mine_0.png" id="2_mine0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/mine/mine_1.png" id="3_mine1"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="4_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="5_despawn"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="6_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="7_shadow_mat"]
+[ext_resource type="Script" path="res://scripts/floating.gd" id="8_floating"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_mine"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_mine0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_mine1")
+}],
+"loop": true,
+"name": &"blink",
+"speed": 2.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_mine"]
+radius = 6.0
+
+[node name="Mine" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 0.0
+half_width = 8.0
+points = 40
+explosion_scene = ExtResource("4_explosion")
+explosion_offsets = PackedVector2Array(0, 0, -12, -6, 12, -6, -10, 9, 10, 9)
+destroy_shake = 4.0
+destroy_hit_stop = 0.06
+destroy_sound = "explosion_big"
+blast_radius = 40.0
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("7_shadow_mat")
+position = Vector2(2, 3)
+script = ExtResource("6_shadow")
+
+[node name="Floating" type="Node2D" parent="."]
+script = ExtResource("8_floating")
+sprite_path = NodePath("../AnimatedSprite2D")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_mine")
+animation = &"blink"
+autoplay = "blink"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_mine")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-8, -8, 16, 16)
+script = ExtResource("5_despawn")

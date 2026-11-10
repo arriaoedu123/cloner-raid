@@ -29,12 +29,13 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_heli"]
-size = Vector2(20, 8)
+size = Vector2(24, 8)
 
 [node name="Helicopter" type="Area2D"]
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("1_script")
+half_width = 14.0
 explosion_scene = ExtResource("4_explosion")
 
 [node name="Shadow" type="Sprite2D" parent="."]
@@ -49,7 +50,7 @@ lifetime = 0.5
 local_coords = false
 texture = ExtResource("8_spark")
 emission_shape = 2
-emission_sphere_radius = 9.0
+emission_sphere_radius = 10.0
 direction = Vector2(1, 0)
 spread = 180.0
 gravity = Vector2(0, 0)
@@ -65,9 +66,9 @@ animation = &"fly"
 autoplay = "fly"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -0.5)
+position = Vector2(0, 0.5)
 shape = SubResource("RectangleShape2D_heli")
 
 [node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
-rect = Rect2(-12, -12, 24, 24)
+rect = Rect2(-14, -14, 28, 28)
 script = ExtResource("5_despawn")

@@ -87,6 +87,22 @@ teclado inteiro (WASD ou setas, Espaço ou Enter). Sem controle, os dois dividem
 
 No controle: analógico ou direcional para mover e **A** para atirar.
 
+### Online pela Steam
+
+Escolha **JOGAR ONLINE** (a Steam precisa estar aberta nos dois computadores):
+
+- **CRIAR SALA** mostra um código de 6 letras. Use **COPIAR CÓDIGO** e mande para o amigo, ou
+  **CONVIDAR AMIGO** para escolher um dos seus amigos online da Steam: ele recebe o convite no
+  chat da Steam (precisa estar com o Cloner Raid aberto para entrar direto).
+- **ENTRAR COM CÓDIGO**: digite o código que o amigo mandou (ou cole com Ctrl+V / Cmd+V).
+
+Quando o amigo entra, os dois vão para o **saguão**: o anfitrião escolhe se os pontos são
+juntos ou separados e começa a partida quando estiverem prontos. Cada um pilota o seu avião
+com o próprio teclado ou controle. Na Steam, o jogo aparece como **"Spacewar"**: é o app de testes da Valve
+que o Cloner Raid usa para as salas, já que ele não está publicado na loja.
+
+### Regras do coop
+
 Cada um tem o próprio combustível e as próprias vidas. Quem cai renasce ao lado do outro; se
 os dois caírem, recomeçam juntos da última ponte. A tela acompanha o avião de trás, e o da
 frente não passa do topo da tela.

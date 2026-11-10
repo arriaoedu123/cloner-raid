@@ -9,7 +9,6 @@ const ITEMS: Array[String] = ["TELA CHEIA", "MUSICA", "EFEITOS", "TREMOR DE TELA
 		"CONTROLES", "VOLTAR"]
 const BUTTONS: Array[String] = ["CONTROLES", "VOLTAR"]  # itens sem valor (só confirmar)
 const PANEL := Vector2(300, 214)
-const ARROW_GAP := 11.0  # largura da seta (7 px) + 4 px de espaço até o valor
 
 var selected := 0
 var _opened_frame := -1
@@ -98,35 +97,28 @@ func _close() -> void:
 func _draw() -> void:
 	if _controls_menu.visible:
 		return  # a tela de controles desenha por cima (com o próprio fundo escurecido)
-	var screen := get_viewport_rect().size
-	var top_left := ((screen - PANEL) / 2.0).floor()
-	draw_rect(Rect2(Vector2.ZERO, screen), Color(Palette.OUTLINE, 0.55))
-	draw_rect(Rect2(top_left, PANEL), Palette.OUTLINE)
-	draw_rect(Rect2(top_left + Vector2.ONE, PANEL - Vector2(2, 2)), Palette.BLUE_DARK)
-
-	var cx := screen.x / 2.0
-	PixelText.draw_centered(self, "OPÇÕES", cx, top_left.y + 12, 2)
-	var arrows_on := Time.get_ticks_msec() % 600 < 400
+	var top_left := MenuStyle.panel(self, PANEL, "OPÇÕES")
+	var cx := top_left.x + PANEL.x / 2.0
+	var right := top_left.x + PANEL.x - 18.0
+	var y := top_left.y + MenuStyle.CONTENT_TOP
 	for i in ITEMS.size():
-		var y := top_left.y + 46.0 + i * 22.0
 		var label := ITEMS[i]
-		var show_arrows := i == selected and arrows_on
+		var chosen := i == selected
 		if BUTTONS.has(label):
-			var text := ("> " + label + " <") if show_arrows else ("  " + label + "  ")
-			PixelText.draw_centered(self, text, cx, y)
-			continue
-		PixelText.draw(self, label, Vector2(top_left.x + 18, y))
-		# valor à direita, com espaço reservado para uma seta de cada lado (o valor não "pula")
-		var right := top_left.x + PANEL.x - 18
-		var value_left := _draw_value(label, right - ARROW_GAP, y)
-		if show_arrows:
-			PixelText.draw(self, "<", Vector2(value_left - ARROW_GAP, y))
-			PixelText.draw(self, ">", Vector2(right - PixelText.CELL.x, y))
+			if label == BUTTONS[0]:  # divisória entre os ajustes e os botões
+				MenuStyle.divider(self, top_left.x + 18.0, right, y - 4.0)
+				y += 6.0
+			MenuStyle.item(self, label, cx, y, chosen)
+		else:
+			PixelText.draw(self, label, Vector2(top_left.x + 18.0, y), 1,
+					MenuStyle.SELECTED if chosen else Color.WHITE)
+			_draw_value(label, right - MenuStyle.ARROW_ROOM, y, chosen)
+		y += 22.0
 
 
-## Valor terminando em `right_x`: SIM/NAO ou uma barra de 10 quadradinhos para os volumes.
-## Retorna o x onde o valor começa (para encostar a seta da esquerda).
-func _draw_value(label: String, right_x: float, y: float) -> float:
+## Valor numa caixinha terminando em `right_x`: SIM/NÃO, JUNTOS/SEPARADOS ou uma barra de
+## 10 quadradinhos para os volumes.
+func _draw_value(label: String, right_x: float, y: float, chosen: bool) -> void:
 	var text := ""
 	match label:
 		"TELA CHEIA":
@@ -136,14 +128,13 @@ func _draw_value(label: String, right_x: float, y: float) -> float:
 		"PONTOS NO COOP":
 			text = "JUNTOS" if Settings.coop_shared_score else "SEPARADOS"
 		_:
+			var box := MenuStyle.value(self, "", right_x, y, chosen)
 			var level := Settings.music_level if label == "MUSICA" else Settings.sfx_level
-			var left := right_x - (Settings.MAX_LEVEL * 6.0 - 1.0)
+			var left := box.position.x + floorf((box.size.x - (Settings.MAX_LEVEL * 6.0 - 1.0)) / 2.0)
 			for k in Settings.MAX_LEVEL:
 				var pos := Vector2(left + k * 6.0, y + 1.0)
 				draw_rect(Rect2(pos, Vector2(5, 7)), Palette.OUTLINE)
 				var fill := Palette.YELLOW if k < level else Palette.GRAY_DARK
 				draw_rect(Rect2(pos + Vector2.ONE, Vector2(3, 5)), fill)
-			return left
-	var text_left := right_x - PixelText.width(text)
-	PixelText.draw(self, text, Vector2(text_left, y))
-	return text_left
+			return
+	MenuStyle.value(self, text, right_x, y, chosen)

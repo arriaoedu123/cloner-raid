@@ -13,6 +13,7 @@ extends Control
 @export_file("*.tscn") var title_scene := "res://scenes/title.tscn"
 
 const ITEMS: Array[String] = ["CONTINUAR", "OPÇÕES", "MENU PRINCIPAL"]
+const PANEL := Vector2(220, 120)
 
 var selected := 0
 var _opened_frame := -1
@@ -47,10 +48,15 @@ func _process(_delta: float) -> void:
 		_confirm()
 
 
+## Online o jogo NÃO congela (o amigo continua jogando): o menu abre por cima e só os
+## comandos do seu avião ficam travados (Game.input_blocked) enquanto ele está aberto.
 func _open() -> void:
 	selected = 0
 	_opened_frame = Engine.get_process_frames()
-	get_tree().paused = true
+	if Game.online:
+		Game.input_blocked = true
+	else:
+		get_tree().paused = true
 	Sfx.play("ui_select", -6.0)
 	show()
 
@@ -58,6 +64,7 @@ func _open() -> void:
 func _resume() -> void:
 	Sfx.play("ui_select", -6.0)
 	hide()
+	Game.input_blocked = false
 	get_tree().paused = false
 
 
@@ -71,15 +78,16 @@ func _confirm() -> void:
 		"MENU PRINCIPAL":
 			Sfx.play("ui_select", -4.0)
 			get_tree().paused = false
+			Game.input_blocked = false
+			if Game.online:
+				Online.leave()  # o amigo recebe "saiu da partida" e volta ao título
 			get_tree().change_scene_to_file(title_scene)
 
 
 func _draw() -> void:
-	var screen := get_viewport_rect().size
-	var cx := screen.x / 2.0
-	var cy := screen.y / 2.0
-	draw_rect(Rect2(Vector2.ZERO, screen), Color(Palette.OUTLINE, 0.55))
 	if options_menu.visible:
-		return  # o painel de opções desenha por cima
-	PixelText.draw_centered(self, "PAUSA", cx, cy - 70, 3)
-	PixelText.draw_menu(self, ITEMS, selected, cx, cy - 8.0, 30.0)
+		return  # o painel de opções desenha por cima (com o próprio fundo escurecido)
+	var top_left := MenuStyle.panel(self, PANEL, "PAUSA")
+	for i in ITEMS.size():
+		MenuStyle.item(self, ITEMS[i], top_left.x + PANEL.x / 2.0,
+				top_left.y + MenuStyle.CONTENT_TOP + i * 22.0, i == selected)

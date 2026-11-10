@@ -8,7 +8,7 @@ extends Node2D
 ## Cena do jogo, aberta ao escolher JOGAR
 @export_file("*.tscn") var game_scene := "res://scenes/main.tscn"
 
-const OPTIONS: Array[String] = ["1 JOGADOR", "2 JOGADORES", "OPÇÕES", "SAIR"]
+const OPTIONS: Array[String] = ["1 JOGADOR", "2 JOGADORES", "JOGAR ONLINE", "OPÇÕES", "SAIR"]
 const PLANE_FRAMES := {
 	-2: preload("res://assets/sprites/player/plane_left_full.png"),
 	-1: preload("res://assets/sprites/player/plane_left_half.png"),
@@ -22,6 +22,7 @@ var high_score := 0
 var _time := 0.0
 var _starting := false
 var _coop_menu: Control  # tela "quem joga no teclado e quem no controle" (coop_menu.gd)
+var _online_menu: Control  # tela JOGAR ONLINE (online_menu.gd)
 
 @onready var camera: Camera2D = $Camera2D
 @onready var plane: Sprite2D = $Camera2D/Plane
@@ -38,6 +39,12 @@ func _ready() -> void:
 	_coop_menu.set_anchors_preset(Control.PRESET_FULL_RECT)
 	$UI.add_child(_coop_menu)
 	_coop_menu.confirmed.connect(_start_game.bind(true))
+	_online_menu = preload("res://scripts/online_menu.gd").new()
+	_online_menu.set_anchors_preset(Control.PRESET_FULL_RECT)
+	$UI.add_child(_online_menu)
+	Game.online = false
+	if Online.last_message != "":  # a partida online caiu: mostra o aviso
+		_online_menu.open()
 
 
 func _process(delta: float) -> void:
@@ -47,7 +54,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("toggle_fullscreen"):
 		Settings.toggle_fullscreen()
 		return  # Alt+Enter não pode também confirmar a opção do menu
-	if _starting or is_options_open() or _coop_menu.visible:
+	if _starting or is_options_open() or _coop_menu.visible or _online_menu.visible:
 		return
 
 	if InputHint.menu_pressed(&"speed_up", &"ui_up"):
@@ -97,6 +104,8 @@ func _confirm() -> void:
 				_start_game(true)
 			else:
 				_coop_menu.open()
+		"JOGAR ONLINE":
+			_online_menu.open()
 		"OPÇÕES":
 			options_menu.open()
 		"SAIR":

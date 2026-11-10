@@ -1,0 +1,102 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/submarine/submarine_surface_0.png" id="2_surface0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/submarine/submarine_surface_1.png" id="3_surface1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/submarine/submarine_dive.png" id="4_dive"]
+[ext_resource type="Texture2D" path="res://assets/sprites/submarine/submarine_under_0.png" id="5_under0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/submarine/submarine_under_1.png" id="6_under1"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="7_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="8_despawn"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="9_spark"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="10_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="11_shadow_mat"]
+
+[sub_resource type="Gradient" id="Gradient_wake"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.3, 0.65)
+colors = PackedColorArray(0.957, 0.957, 0.941, 1, 0.741, 0.902, 1, 1, 0.247, 0.663, 0.961, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_sub"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_surface0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_surface1")
+}],
+"loop": true,
+"name": &"surface",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_dive")
+}],
+"loop": true,
+"name": &"dive",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_under0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_under1")
+}],
+"loop": true,
+"name": &"under",
+"speed": 3.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sub"]
+size = Vector2(46, 10)
+
+[node name="Submarine" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 40.0
+half_width = 27.0
+max_hits = 2
+points = 250
+explosion_scene = ExtResource("7_explosion")
+explosion_offsets = PackedVector2Array(-16, 0, 0, 0, 16, 0)
+destroy_shake = 4.0
+destroy_hit_stop = 0.06
+destroy_sound = "explosion_big"
+dives = true
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("11_shadow_mat")
+position = Vector2(2, 3)
+script = ExtResource("10_shadow")
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+position = Vector2(-27, 0)
+emitting = false
+amount = 14
+lifetime = 1.1
+local_coords = false
+texture = ExtResource("9_spark")
+direction = Vector2(-1, 0)
+spread = 25.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 6.0
+initial_velocity_max = 14.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color_ramp = SubResource("Gradient_wake")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_sub")
+animation = &"surface"
+autoplay = "surface"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_sub")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-28, -10, 56, 20)
+script = ExtResource("8_despawn")

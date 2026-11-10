@@ -9,12 +9,12 @@ Saída:
 
 A fonte é usada por scripts/pixel_text.gd; a ordem de CHARSET precisa ser a mesma lá.
 Glifos: branco com os 2 pixels de baixo do corpo em cinza (luz de cima) e contorno padrão.
-Acentos disponíveis: só Ç, Õ e Ã. Glifo com 7 linhas = só corpo; com 12 linhas = 3 de acento
+Acentos disponíveis: só Ç, Õ, Ã e Ó. Glifo com 7 linhas = só corpo; com 12 linhas = 3 de acento
 (em cima) + 7 de corpo + 2 de cedilha (embaixo).
 """
 from style import ASSETS_DIR, blank, outline, player2, to_rows, write_png
 
-CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -:.!><ÇÕÃ"
+CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -:.!><ÇÕÃÓ"
 
 GLYPHS = {
     "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
@@ -65,6 +65,9 @@ GLYPHS = {
           ".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#",
           ".....", "....."],
     "Õ": [".##.#", "#.##.", ".....",
+          ".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.",
+          ".....", "....."],
+    "Ó": ["...#.", "..#..", ".....",
           ".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###.",
           ".....", "....."],
     "Ç": [".....", ".....", ".....",

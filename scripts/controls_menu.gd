@@ -7,7 +7,7 @@ extends Control
 
 signal closed
 
-const PANEL := Vector2(400, 244)
+const PANEL := Vector2(400, 256)
 const ROW_H := 20.0
 const EXTRA_ITEMS: Array[String] = ["RESTAURAR PADRÃO", "VOLTAR"]
 const AXIS_DEADZONE := 0.6
@@ -118,39 +118,36 @@ func _close() -> void:
 
 
 func _draw() -> void:
-	var screen := get_viewport_rect().size
-	var top_left := ((screen - PANEL) / 2.0).floor()
-	draw_rect(Rect2(Vector2.ZERO, screen), Color(Palette.OUTLINE, 0.55))
-	draw_rect(Rect2(top_left, PANEL), Palette.OUTLINE)
-	draw_rect(Rect2(top_left + Vector2.ONE, PANEL - Vector2(2, 2)), Palette.BLUE_DARK)
-
-	var cx := screen.x / 2.0
+	var top_left := MenuStyle.panel(self, PANEL, "CONTROLES")
+	var cx := top_left.x + PANEL.x / 2.0
 	var col_x := [top_left.x + 205.0, top_left.x + 320.0]  # centro das colunas
-	PixelText.draw_centered(self, "CONTROLES", cx, top_left.y + 10, 2)
-	PixelText.draw_centered(self, "TECLADO", col_x[0], top_left.y + 38)
-	PixelText.draw_centered(self, "CONTROLE", col_x[1], top_left.y + 38)
-	draw_rect(Rect2(top_left.x + 14, top_left.y + 51, PANEL.x - 28, 1), Palette.BLUE)
+	var head_y := top_left.y + 44.0
+	PixelText.draw_centered(self, "TECLADO", col_x[0], head_y, 1, MenuStyle.SOFT)
+	PixelText.draw_centered(self, "CONTROLE", col_x[1], head_y, 1, MenuStyle.SOFT)
+	MenuStyle.divider(self, top_left.x + 18.0, top_left.x + PANEL.x - 18.0, head_y + 13.0)
 
 	var blink := Time.get_ticks_msec() % 600 < 400
 	for i in Controls.ACTIONS.size():
 		var action := Controls.ACTIONS[i]
-		var y := top_left.y + 58.0 + i * ROW_H
-		PixelText.draw(self, Controls.LABELS[action], Vector2(top_left.x + 18, y))
+		var y := top_left.y + 64.0 + i * ROW_H
+		PixelText.draw(self, Controls.LABELS[action], Vector2(top_left.x + 18, y), 1,
+				MenuStyle.SELECTED if i == row else Color.WHITE)
 		for c in 2:
 			var text := Controls.binding_name(action, c == 0)
-			if i == row and c == column:
+			var chosen: bool = i == row and c == column
+			if chosen:  # comando escolhido numa caixinha azul com borda amarela
+				var box := Rect2(col_x[c] - 50.0, y - 3.0, 100.0, 15.0)
+				draw_rect(box, Palette.OUTLINE)
+				draw_rect(box.grow(-1), MenuStyle.SELECTED)
+				draw_rect(box.grow(-2), Palette.BLUE)
 				if _waiting:
 					text = "APERTE..." if blink else ""
-				elif blink:
-					text = "> " + text + " <"
 			PixelText.draw_centered(self, text, col_x[c], y)
 
+	var extra_y := top_left.y + 72.0 + Controls.ACTIONS.size() * ROW_H
 	for j in EXTRA_ITEMS.size():
-		var i := Controls.ACTIONS.size() + j
-		var text := EXTRA_ITEMS[j]
-		if i == row and blink:
-			text = "> " + text + " <"
-		PixelText.draw_centered(self, text, cx, top_left.y + 184.0 + j * ROW_H)
+		MenuStyle.item(self, EXTRA_ITEMS[j], cx, extra_y + j * ROW_H,
+				Controls.ACTIONS.size() + j == row)
 
 	PixelText.draw_centered(self, "[%s] TROCA   [%s] VOLTA" % [InputHint.confirm(), InputHint.back()],
-			cx, top_left.y + PANEL.y - 16)
+			cx, top_left.y + PANEL.y - 20, 1, MenuStyle.SOFT)
