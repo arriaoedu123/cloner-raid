@@ -45,6 +45,8 @@ signal shot_down(points: int)
 const FLASH_TIME := 0.08
 
 var hits := 0
+## Avião que deu o último tiro (quem leva os pontos no coop com pontos separados)
+var killer: Player
 var is_destroyed := false
 var start_x := 0.0
 var river: River
@@ -150,8 +152,10 @@ func _on_area_entered(area: Area2D) -> void:
 			player.break_shield()  # o escudo absorve a batida; o inimigo explode (sem pontos)
 		else:
 			player.die()
+		killer = player  # só para a vibração ir ao controle de quem bateu (batida não dá pontos)
 		destroy()
 	elif area is PlayerBullet:
+		killer = (area as PlayerBullet).shooter
 		area.queue_free()
 		take_hit()
 
@@ -176,7 +180,7 @@ func destroy() -> void:
 	is_destroyed = true
 	for offset in explosion_offsets:
 		Effects.spawn(explosion_scene, global_position + offset, get_parent())
-	Effects.shake(self, destroy_shake)
+	Effects.shake(self, destroy_shake, 0.25, killer)
 	Effects.hit_stop(self, destroy_hit_stop)
 	Sfx.play(destroy_sound, 0.0, 1.0, 0.08)
 	queue_free()

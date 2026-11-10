@@ -5,6 +5,35 @@ extends Node2D
 ##
 ## Todo sorteio de objetos usa `river.rng` (re-semeado a cada seção do rio), para que
 ## recomeçar uma seção recrie exatamente os mesmos objetos nos mesmos lugares.
+##
+## Coop local (`two_players`): dois aviões, cada um com combustível e vidas. A câmera segue o
+## de TRÁS e o da frente não passa do topo da tela. Quem cai renasce ao lado do outro; se os
+## dois caírem, a seção recomeça. Pontos juntos (1 placar) ou separados (1 por jogador).
+
+## Modo da próxima partida, escolhido no título (variável estática sobrevive à troca de cena)
+static var two_players := false
+## Coop: de onde vem o comando do J1 e do J2 (-1 = teclado, senão o número do controle);
+## escolhido na tela do coop (coop_menu.gd). Os dois -1 = teclado dividido.
+static var coop_devices: Array = [-1, -1]
+
+const PLAYER_SCENE := preload("res://scenes/player.tscn")
+## Coop: distância de cada avião ao centro ao (re)começar uma seção (px)
+const COOP_SPREAD := 30.0
+## Coop: o avião da frente não passa desta distância do topo da tela (px)
+const COOP_TOP_MARGIN := 48.0
+## Coop: velocidade máxima da câmera ao trocar de avião seguido (px/s), sem "pulo" na tela
+const COOP_CAMERA_SPEED := 400.0
+
+
+## Placar: pontos, combo e vidas extras por pontos. Um só (1 jogador ou coop com pontos
+## juntos) ou um por jogador (coop com pontos separados).
+class ScoreBoard:
+	var score := 0
+	var combo := 0
+	var combo_timer := 0.0
+	var next_bonus := 0  # pontuação em que vem a próxima vida extra
+	var bonus_gap := 0   # intervalo até ela (cresce bonus_life_step a cada vida)
+
 
 @export_group("Partida")
 ## Aviões reserva no começo (além do que está voando)
@@ -92,8 +121,25 @@ extends Node2D
 ## Menos dorminhocos: mais inimigos já chegam se mexendo
 @export_range(0.0, 1.0) var hard_sleeper_chance := 0.3
 
-var score := 0
-var lives := 0  # aviões reserva
+## Aviões na partida (1 ou 2); `player` é sempre o jogador 1
+var players: Array[Player] = []
+## Placares: 1 (pontos juntos) ou 1 por jogador (pontos separados)
+var boards: Array[ScoreBoard] = [ScoreBoard.new()]
+
+## Atalhos para o jogador 1 / 1º placar (é tudo que existe no modo de 1 jogador)
+var score: int:
+	get: return boards[0].score
+	set(value): boards[0].score = value
+var combo: int:
+	get: return boards[0].combo
+	set(value): boards[0].combo = value
+var combo_timer: float:
+	get: return boards[0].combo_timer
+	set(value): boards[0].combo_timer = value
+var lives: int:  # aviões reserva do jogador 1
+	get: return player.lives
+	set(value): player.lives = value
+
 var is_game_over := false
 ## Maior pontuação já feita neste computador (carregada do SaveData)
 var high_score := 0
@@ -107,12 +153,7 @@ var _power_up_hints := {}
 
 ## Seção em que o avião recomeça depois de cair (avança ao destruir cada ponte)
 var checkpoint_section := 0
-## Abates seguidos e quanto tempo falta para o combo acabar
-var combo := 0
-var combo_timer := 0.0
 
-var _next_bonus := 0  # pontuação em que vem a próxima vida extra
-var _bonus_gap := 0   # intervalo até ela (cresce bonus_life_step a cada vida)
 var _can_restart := false
 var _last_spawn_row := -1000
 var _last_fuel_row := 0
@@ -129,20 +170,79 @@ var _player_start := Vector2.ZERO
 func _ready() -> void:
 	Settings.load_and_apply()
 	Sfx.warm_up()
-	lives = starting_lives
-	_bonus_gap = bonus_life_every
-	_next_bonus = bonus_life_every
-	high_score = SaveData.load_value("records", "high_score", 0)
 	_player_start = player.position
+	players = [player]
+	if two_players:
+		_add_second_player()
+	for board in boards:
+		board.bonus_gap = bonus_life_every
+		board.next_bonus = bonus_life_every
+	for p in players:
+		p.lives = starting_lives
+		p.died.connect(_on_player_died.bind(p))
+		p.power_up_taken.connect(_on_power_up_taken.bind(p))
+	high_score = SaveData.load_value("records", _record_key(), 0)
 	river.row_created.connect(_on_river_row_created)
-	player.died.connect(_on_player_died)
-	intro_active = not SaveData.load_value("progress", "intro_done", false)
+	# a introdução do combustível é só para quem joga sozinho pela 1ª vez
+	intro_active = not two_players and not SaveData.load_value("progress", "intro_done", false)
 	if intro_active:
 		player.fuel = player.max_fuel * intro_start_fuel
 		player.refueled.connect(_end_intro, CONNECT_ONE_SHOT)
 	for kind in PowerUp.Kind.values():
 		_power_up_hints[kind] = not SaveData.load_value("progress", _power_up_key(kind), false)
-	player.power_up_taken.connect(_on_power_up_taken)
+
+
+## Coop: cria o avião do jogador 2 (lilás), as ações de cada um, a 2ª barra de combustível
+## e, com pontos separados, o 2º placar.
+func _add_second_player() -> void:
+	Controls.setup_coop_actions(coop_devices)
+	var p2: Player = PLAYER_SCENE.instantiate()
+	p2.name = "Player2"
+	add_child(p2)
+	move_child(p2, player.get_index() + 1)  # processa antes da câmera, como o jogador 1
+	player.setup_player(1, true)
+	p2.setup_player(2, true)
+	player.position = _player_start + Vector2(-COOP_SPREAD, 0)
+	p2.position = _player_start + Vector2(COOP_SPREAD, 0)
+	players.append(p2)
+	if not Settings.coop_shared_score:
+		boards.append(ScoreBoard.new())
+	camera.max_follow_speed = COOP_CAMERA_SPEED
+	# 2ª barra de combustível, no canto superior direito
+	var gauge: Control = $HUD/FuelGauge.duplicate()
+	gauge.player = p2
+	$HUD.add_child(gauge)
+	gauge.position.x = get_viewport_rect().size.x - $HUD/FuelGauge.position.x - gauge.size.x
+
+
+## Chave do recorde no save.cfg: um para 1 jogador e outro para o coop.
+func _record_key() -> String:
+	return "high_score_2p" if two_players else "high_score"
+
+
+func _physics_process(_delta: float) -> void:
+	if players.size() < 2:
+		return
+	var alive := _alive_players()
+	if alive.is_empty():
+		return
+	# a câmera segue o avião de trás; o da frente não passa do topo da tela
+	var rear := alive[0]
+	for p in alive:
+		if p.position.y > rear.position.y:
+			rear = p
+	camera.target = rear
+	var top := camera.get_screen_center_position().y - get_viewport_rect().size.y / 2.0 + COOP_TOP_MARGIN
+	for p in alive:
+		p.position.y = maxf(p.position.y, top)
+
+
+func _alive_players() -> Array[Player]:
+	var alive: Array[Player] = []
+	for p in players:
+		if not p.is_dead:
+			alive.append(p)
+	return alive
 
 
 ## Primeiro reabastecimento: o jogador aprendeu, a introdução não volta mais.
@@ -156,10 +256,11 @@ func power_up_hint(kind: PowerUp.Kind) -> bool:
 	return _power_up_hints.get(kind, false)
 
 
-## Pegou um power-up: a caixa de vida dá +1 avião reserva, e a dica daquele tipo não volta mais.
-func _on_power_up_taken(kind: PowerUp.Kind) -> void:
+## Pegou um power-up: a caixa de vida dá +1 avião reserva a quem pegou, e a dica daquele
+## tipo não volta mais.
+func _on_power_up_taken(kind: PowerUp.Kind, p: Player) -> void:
 	if kind == PowerUp.Kind.LIFE:
-		lives += 1
+		p.lives += 1
 	if power_up_hint(kind):
 		_power_up_hints[kind] = false
 		SaveData.save_value("progress", _power_up_key(kind), true)
@@ -177,37 +278,63 @@ func _process(delta: float) -> void:
 		get_tree().reload_current_scene()
 	elif _can_restart and (Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("ui_cancel")):
 		get_tree().change_scene_to_file("res://scenes/title.tscn")
-	if combo > 0:
-		combo_timer -= delta
-		if combo_timer <= 0.0:
-			combo = 0
+	for board in boards:
+		if board.combo > 0:
+			board.combo_timer -= delta
+			if board.combo_timer <= 0.0:
+				board.combo = 0
+
+
+## Placar de quem fez a jogada (com pontos juntos, ou sem saber quem foi, é o 1º).
+func board_of(p: Player) -> ScoreBoard:
+	if boards.size() == 1 or p == null:
+		return boards[0]
+	return boards[p.number - 1]
 
 
 ## Multiplicador atual: x1, depois +1 a cada `combo_per_level` abates seguidos.
-func multiplier() -> int:
-	return mini(1 + combo / combo_per_level, max_multiplier)
+func multiplier(board: ScoreBoard = null) -> int:
+	if board == null:
+		board = boards[0]
+	return mini(1 + board.combo / combo_per_level, max_multiplier)
 
 
-## Inimigo (ou ponte) derrubado: soma ao combo e ganha os pontos multiplicados.
-func _on_enemy_shot_down(points: int) -> void:
-	combo += 1
-	combo_timer = combo_window
-	add_score(points * multiplier())
+## Inimigo (ou ponte) derrubado: soma ao combo de quem atirou e ganha os pontos multiplicados.
+func _on_enemy_shot_down(points: int, node: Node) -> void:
+	var board := board_of(node.killer)
+	board.combo += 1
+	board.combo_timer = combo_window
+	add_score(points * multiplier(board), board)
 
 
-## Posto destruído: dá os poucos pontos dele, mas quebra o combo.
-func _on_depot_shot_down(points: int) -> void:
-	combo = 0
-	add_score(points)
+## Posto destruído: dá os poucos pontos dele, mas quebra o combo de quem atirou.
+func _on_depot_shot_down(points: int, node: Node) -> void:
+	var board := board_of(node.killer)
+	board.combo = 0
+	add_score(points, board)
 
 
-func add_score(points: int) -> void:
-	score += points
-	while score >= _next_bonus:
-		lives += 1
+func add_score(points: int, board: ScoreBoard = null) -> void:
+	if board == null:
+		board = boards[0]
+	board.score += points
+	while board.score >= board.next_bonus:
+		_bonus_life_receiver(board).lives += 1
 		Sfx.play("extra_life")
-		_bonus_gap += bonus_life_step
-		_next_bonus += _bonus_gap
+		board.bonus_gap += bonus_life_step
+		board.next_bonus += board.bonus_gap
+
+
+## Quem ganha a vida extra por pontos: o dono do placar (pontos separados) ou, com pontos
+## juntos, quem estiver com menos vidas entre os que ainda estão no jogo.
+func _bonus_life_receiver(board: ScoreBoard) -> Player:
+	if boards.size() > 1:
+		return players[boards.find(board)]
+	var best := player
+	for p in players:
+		if not p.is_out and (best.is_out or p.lives < best.lives):
+			best = p
+	return best
 
 
 func _on_river_row_created(index: int, y: float, left: float, right: float) -> void:
@@ -271,7 +398,7 @@ func _on_river_row_created(index: int, y: float, left: float, right: float) -> v
 func _spawn_bridge(section: int, y: float, left: float, right: float) -> void:
 	var bridge: Enemy = bridge_scene.instantiate()
 	bridge.position = Vector2((left + right) / 2.0, y + River.ROW_H / 2.0)
-	bridge.shot_down.connect(_on_enemy_shot_down)
+	bridge.shot_down.connect(_on_enemy_shot_down.bind(bridge))
 	bridge.shot_down.connect(func(_points: int): checkpoint_section = section)
 	objects.add_child(bridge)
 
@@ -295,41 +422,86 @@ func _spawn(node: Node2D, y: float, channels: Array, margin: float) -> void:
 		x = river.rng.randf_range(c.x + margin, c.y - margin)
 	node.position = Vector2(x, y + River.ROW_H / 2.0)
 	if node is FuelDepot:
-		node.connect("shot_down", _on_depot_shot_down)
+		node.connect("shot_down", _on_depot_shot_down.bind(node))
 	elif node.has_signal("shot_down"):
-		node.connect("shot_down", _on_enemy_shot_down)
+		node.connect("shot_down", _on_enemy_shot_down.bind(node))
 	objects.add_child(node)
 
 
-func _on_player_died() -> void:
-	combo = 0
-	if lives <= 0:
-		is_game_over = true
-		if score > high_score:
-			high_score = score
-			is_new_record = true
-			SaveData.save_value("records", "high_score", high_score)
-		await get_tree().create_timer(game_over_input_delay).timeout
-		_can_restart = true
+## Um avião caiu. Com vida sobrando ele gasta uma e espera para voltar; sem vida, fica fora.
+## Se o outro avião (coop) está vivo, quem caiu renasce ao lado dele; se ninguém está vivo,
+## a seção recomeça para todos; se todos estão fora, fim de jogo.
+func _on_player_died(p: Player) -> void:
+	board_of(p).combo = 0
+	if p.lives > 0:
+		p.lives -= 1
+		p.waiting_respawn = true
+	else:
+		p.is_out = true
+	if not _alive_players().is_empty():
+		if not p.waiting_respawn:
+			return
+		await get_tree().create_timer(respawn_delay).timeout
+		var partners := _alive_players()
+		# se o outro também caiu nesse meio-tempo, o recomeço da seção traz os dois
+		if p.waiting_respawn and not partners.is_empty():
+			p.waiting_respawn = false
+			p.respawn(_spawn_point_near(partners[0]))
 		return
-
-	lives -= 1
+	if players.all(func(o: Player) -> bool: return o.is_out):
+		_game_over()
+		return
 	await get_tree().create_timer(respawn_delay).timeout
 	restart_from_checkpoint()
 
 
-## Seção do rio em que o avião está agora (0 = começo; sobe a cada ponte passada).
+func _game_over() -> void:
+	is_game_over = true
+	# com pontos separados não há recorde (é disputa entre os dois, não placar do time)
+	if boards.size() == 1 and score > high_score:
+		high_score = score
+		is_new_record = true
+		SaveData.save_value("records", _record_key(), high_score)
+	await get_tree().create_timer(game_over_input_delay).timeout
+	_can_restart = true
+
+
+## Coop: onde quem caiu renasce: na altura do parceiro, no mesmo canal de água, um pouco ao
+## lado dele (do lado com mais espaço).
+func _spawn_point_near(partner: Player) -> Vector2:
+	var pos := partner.position
+	var index := int(floor((river.start_y - pos.y) / River.ROW_H))
+	for c: Vector2 in river.channels_at(index):
+		if pos.x >= c.x and pos.x <= c.y:
+			var side := 1.0 if c.y - pos.x > pos.x - c.x else -1.0
+			pos.x = clampf(pos.x + side * COOP_SPREAD * 2.0, c.x + 24.0, c.y - 24.0)
+	return pos
+
+
+## Seção do rio em que o jogo está (0 = começo; sobe a cada ponte passada): a do avião mais
+## à frente.
 func current_section() -> int:
-	return river.section_of(int(floor((river.start_y - player.position.y) / River.ROW_H)))
+	var y := player.position.y
+	for p in players:
+		y = minf(y, p.position.y)
+	return river.section_of(int(floor((river.start_y - y) / River.ROW_H)))
 
 
 ## Recomeça logo depois da última ponte destruída (ou do início), com a seção recriada igual.
+## Volta todo avião que ainda está no jogo (no coop, lado a lado).
 func restart_from_checkpoint() -> void:
 	for child in objects.get_children():
 		child.queue_free()
 	for child in get_children():
 		if child is PlayerBullet:
 			child.queue_free()
-	player.respawn(river.section_start_position(checkpoint_section, _player_start))
+	var start := river.section_start_position(checkpoint_section, _player_start)
+	for p in players:
+		if p.is_out:
+			continue
+		p.waiting_respawn = false
+		var spread := 0.0 if players.size() == 1 else (COOP_SPREAD if p.number == 2 else -COOP_SPREAD)
+		p.respawn(start + Vector2(spread, 0))
+	camera.target = player if not player.is_out else players[-1]
 	camera.follow()
 	river.reset_to_section(checkpoint_section)

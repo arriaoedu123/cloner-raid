@@ -71,7 +71,25 @@ Todos os comandos podem ser trocados em **OPÇÕES → CONTROLES** (teclado e co
 | Confirmar / voltar nos menus | Enter / Esc | A / B |
 | Tela cheia | F11, Alt+Enter ou Ctrl+Cmd+F (Mac) | — |
 
-Opções: tela cheia, volume da música e dos efeitos, tremor de tela (e vibração do controle).
+Opções: tela cheia, volume da música e dos efeitos, tremor de tela (e vibração do controle)
+e se os pontos no coop são juntos ou separados.
+
+### 2 jogadores (coop local)
+
+Escolha **2 JOGADORES** no título. Com algum controle conectado, uma tela pergunta quem joga
+no **teclado** e quem no **controle** (←/→ trocam). Quem fica sozinho no teclado usa o
+teclado inteiro (WASD ou setas, Espaço ou Enter). Sem controle, os dois dividem o teclado:
+
+| Ação | Jogador 1 (amarelo) | Jogador 2 (lilás) |
+|---|---|---|
+| Mover / acelerar / frear | W A S D | Setas |
+| Atirar | Espaço ou J | Enter |
+
+No controle: analógico ou direcional para mover e **A** para atirar.
+
+Cada um tem o próprio combustível e as próprias vidas. Quem cai renasce ao lado do outro; se
+os dois caírem, recomeçam juntos da última ponte. A tela acompanha o avião de trás, e o da
+frente não passa do topo da tela.
 
 ## Rodar pelo código
 

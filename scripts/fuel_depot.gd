@@ -15,6 +15,8 @@ extends Area2D
 signal shot_down(points: int)
 
 var is_destroyed := false
+## Avião que destruiu o posto (no coop com pontos separados, o combo quebrado é o dele)
+var killer: Player
 
 
 func _ready() -> void:
@@ -29,6 +31,7 @@ func _physics_process(delta: float) -> void:
 
 func _on_area_entered(area: Area2D) -> void:
 	if area is PlayerBullet:
+		killer = (area as PlayerBullet).shooter
 		area.queue_free()
 		if not is_destroyed:
 			shot_down.emit(points)
@@ -40,7 +43,7 @@ func destroy() -> void:
 		return
 	is_destroyed = true
 	Effects.spawn(explosion_scene, global_position, get_parent())
-	Effects.shake(self, 2.0)
+	Effects.shake(self, 2.0, 0.25, killer)
 	Effects.hit_stop(self, 0.03)
 	Sfx.play("explosion_small", 0.0, 1.0, 0.08)
 	queue_free()

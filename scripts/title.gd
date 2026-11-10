@@ -1,13 +1,14 @@
 extends Node2D
 ## Tela de título: o rio rolando sozinho ao fundo, o avião balançando no meio da tela
-## e o menu (JOGAR / OPÇÕES / SAIR). Setas ou W/S escolhem; tiro ou Enter confirma.
+## e o menu (1 JOGADOR / 2 JOGADORES / OPÇÕES / SAIR). Setas ou W/S escolhem; tiro ou Enter
+## confirma. 2 JOGADORES = coop local (Game.two_players).
 
 ## Velocidade com que o rio passa no fundo (px/s)
 @export var scroll_speed := 60.0
 ## Cena do jogo, aberta ao escolher JOGAR
 @export_file("*.tscn") var game_scene := "res://scenes/main.tscn"
 
-const OPTIONS: Array[String] = ["JOGAR", "OPÇÕES", "SAIR"]
+const OPTIONS: Array[String] = ["1 JOGADOR", "2 JOGADORES", "OPÇÕES", "SAIR"]
 const PLANE_FRAMES := {
 	-2: preload("res://assets/sprites/player/plane_left_full.png"),
 	-1: preload("res://assets/sprites/player/plane_left_half.png"),
@@ -20,6 +21,7 @@ var selected := 0
 var high_score := 0
 var _time := 0.0
 var _starting := false
+var _coop_menu: Control  # tela "quem joga no teclado e quem no controle" (coop_menu.gd)
 
 @onready var camera: Camera2D = $Camera2D
 @onready var plane: Sprite2D = $Camera2D/Plane
@@ -32,6 +34,10 @@ func _ready() -> void:
 	Sfx.warm_up()
 	high_score = SaveData.load_value("records", "high_score", 0)
 	camera.position = Vector2(get_viewport_rect().size.x / 2.0, 180.0)
+	_coop_menu = preload("res://scripts/coop_menu.gd").new()
+	_coop_menu.set_anchors_preset(Control.PRESET_FULL_RECT)
+	$UI.add_child(_coop_menu)
+	_coop_menu.confirmed.connect(_start_game.bind(true))
 
 
 func _process(delta: float) -> void:
@@ -41,7 +47,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("toggle_fullscreen"):
 		Settings.toggle_fullscreen()
 		return  # Alt+Enter não pode também confirmar a opção do menu
-	if _starting or is_options_open():
+	if _starting or is_options_open() or _coop_menu.visible:
 		return
 
 	if InputHint.menu_pressed(&"speed_up", &"ui_up"):
@@ -68,6 +74,13 @@ func _move_selection(step: int) -> void:
 	Sfx.play("ui_move", -6.0)
 
 
+func _start_game(two_players: bool) -> void:
+	Game.two_players = two_players
+	_starting = true
+	await get_tree().create_timer(0.25).timeout  # deixa o som de confirmar tocar
+	get_tree().change_scene_to_file(game_scene)
+
+
 func is_options_open() -> bool:
 	return options_menu.visible
 
@@ -75,10 +88,15 @@ func is_options_open() -> bool:
 func _confirm() -> void:
 	Sfx.play("ui_select", -4.0)
 	match OPTIONS[selected]:
-		"JOGAR":
-			_starting = true
-			await get_tree().create_timer(0.25).timeout  # deixa o som de confirmar tocar
-			get_tree().change_scene_to_file(game_scene)
+		"1 JOGADOR":
+			_start_game(false)
+		"2 JOGADORES":
+			# com controle conectado, primeiro escolhe quem joga no teclado e quem no controle
+			if Input.get_connected_joypads().is_empty():
+				Game.coop_devices = [-1, -1]  # os dois no teclado (dividido)
+				_start_game(true)
+			else:
+				_coop_menu.open()
 		"OPÇÕES":
 			options_menu.open()
 		"SAIR":

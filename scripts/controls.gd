@@ -146,6 +146,58 @@ static func _serialize(e: InputEvent) -> Dictionary:
 	return {}
 
 
+## Coop local: teclas de cada jogador. Os comandos do jogo viram ações próprias
+## ("p1_move_left", "p2_shoot"...), fixas (não remapeáveis).
+const COOP_KEYS := {
+	1: {&"move_left": [KEY_A], &"move_right": [KEY_D], &"speed_up": [KEY_W], &"slow_down": [KEY_S],
+		&"shoot": [KEY_SPACE, KEY_J]},
+	2: {&"move_left": [KEY_LEFT], &"move_right": [KEY_RIGHT], &"speed_up": [KEY_UP], &"slow_down": [KEY_DOWN],
+		&"shoot": [KEY_ENTER, KEY_KP_ENTER]},
+}
+## No controle: [eixo, sentido, botão do direcional] de cada ação (eixo -1 = só botão)
+const COOP_PAD := {
+	&"move_left": [JOY_AXIS_LEFT_X, -1.0, JOY_BUTTON_DPAD_LEFT],
+	&"move_right": [JOY_AXIS_LEFT_X, 1.0, JOY_BUTTON_DPAD_RIGHT],
+	&"speed_up": [JOY_AXIS_LEFT_Y, -1.0, JOY_BUTTON_DPAD_UP],
+	&"slow_down": [JOY_AXIS_LEFT_Y, 1.0, JOY_BUTTON_DPAD_DOWN],
+	&"shoot": [-1, 0.0, JOY_BUTTON_A],
+}
+
+
+## Cria (ou recria) as ações do coop. `devices[0]`/`devices[1]` = de onde vem o comando do
+## J1/J2: -1 = teclado, senão o número do controle (Input.get_connected_joypads()).
+## Os dois no teclado: dividido (J1 = WASD + Espaço/J, J2 = setas + Enter). Só um no
+## teclado: ele usa o teclado inteiro. Chamado no começo de cada partida a 2.
+static func setup_coop_actions(devices: Array = [-1, -1]) -> void:
+	var both_keyboard: bool = devices[0] < 0 and devices[1] < 0
+	for p in [1, 2]:
+		var device: int = devices[p - 1]
+		for action: StringName in COOP_PAD:
+			var name := StringName("p%d_%s" % [p, action])
+			if InputMap.has_action(name):
+				InputMap.erase_action(name)
+			InputMap.add_action(name, 0.2)
+			if device < 0:
+				var keys: Array = COOP_KEYS[p][action] if both_keyboard \
+						else COOP_KEYS[1][action] + COOP_KEYS[2][action]
+				for key: Key in keys:
+					var k := InputEventKey.new()
+					k.physical_keycode = key
+					InputMap.action_add_event(name, k)
+				continue
+			var pad: Array = COOP_PAD[action]
+			if pad[0] >= 0:
+				var m := InputEventJoypadMotion.new()
+				m.device = device
+				m.axis = pad[0]
+				m.axis_value = pad[1]
+				InputMap.action_add_event(name, m)
+			var b := InputEventJoypadButton.new()
+			b.device = device
+			b.button_index = pad[2]
+			InputMap.action_add_event(name, b)
+
+
 static func _deserialize(d: Dictionary) -> InputEvent:
 	var e := _deserialize_event(d)
 	if e:

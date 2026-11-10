@@ -5,9 +5,10 @@ extends Control
 
 signal closed
 
-const ITEMS: Array[String] = ["TELA CHEIA", "MUSICA", "EFEITOS", "TREMOR DE TELA", "CONTROLES", "VOLTAR"]
+const ITEMS: Array[String] = ["TELA CHEIA", "MUSICA", "EFEITOS", "TREMOR DE TELA", "PONTOS NO COOP",
+		"CONTROLES", "VOLTAR"]
 const BUTTONS: Array[String] = ["CONTROLES", "VOLTAR"]  # itens sem valor (só confirmar)
-const PANEL := Vector2(300, 192)
+const PANEL := Vector2(300, 214)
 const ARROW_GAP := 11.0  # largura da seta (7 px) + 4 px de espaço até o valor
 
 var selected := 0
@@ -79,6 +80,8 @@ func _change(step: int) -> void:
 			if Settings.screen_shake:
 				Effects.shake_enabled = true
 				Effects.shake(self, 3.0)  # mostra como fica
+		"PONTOS NO COOP":
+			Settings.coop_shared_score = not Settings.coop_shared_score
 		_:
 			return
 	Settings.apply()
@@ -130,6 +133,8 @@ func _draw_value(label: String, right_x: float, y: float) -> float:
 			text = "SIM" if Settings.fullscreen else "NÃO"
 		"TREMOR DE TELA":
 			text = "SIM" if Settings.screen_shake else "NÃO"
+		"PONTOS NO COOP":
+			text = "JUNTOS" if Settings.coop_shared_score else "SEPARADOS"
 		_:
 			var level := Settings.music_level if label == "MUSICA" else Settings.sfx_level
 			var left := right_x - (Settings.MAX_LEVEL * 6.0 - 1.0)

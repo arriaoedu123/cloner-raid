@@ -65,6 +65,18 @@ signal refueled
 ## Emitido ao pegar uma caixa de power-up
 signal power_up_taken(kind: PowerUp.Kind)
 
+## Jogador dono do avião: 1 (amarelo) ou 2 (lilás, só no coop). Ver setup_player().
+var number := 1
+## Prefixo das ações lidas: "" no modo de 1 jogador (todas as teclas e controles); no coop
+## "p1_"/"p2_" (ver Controls.setup_coop_actions)
+var input_prefix := ""
+## Aviões reserva deste jogador
+var lives := 0
+## Caiu sem vida sobrando: fica fora até o fim da partida (no coop o outro continua)
+var is_out := false
+## Caiu e já gastou uma vida: espera a hora de renascer
+var waiting_respawn := false
+
 var is_dead := false
 var invulnerable_timer := 0.0
 var velocity_x := 0.0
@@ -93,6 +105,25 @@ func _ready() -> void:
 	river = get_tree().get_first_node_in_group("river") as River
 
 
+## Coop: define o jogador (1 ou 2). O jogador 2 lê as ações "p2_*" e usa os sprites lilás
+## (mesmos desenhos com "_p2" no nome, gerados por tools/sprites/player.py).
+func setup_player(player_number: int, coop: bool) -> void:
+	number = player_number
+	input_prefix = "p%d_" % number if coop else ""
+	if number == 2:
+		var frames: SpriteFrames = sprite.sprite_frames.duplicate()  # não muda o do jogador 1
+		for anim in frames.get_animation_names():
+			for i in frames.get_frame_count(anim):
+				var path := frames.get_frame_texture(anim, i).resource_path
+				frames.set_frame(anim, i, load(path.replace(".png", "_p2.png")))
+		sprite.sprite_frames = frames
+
+
+## Nome da ação deste jogador (ex.: "shoot" vira "p2_shoot" no coop).
+func _action(base: String) -> StringName:
+	return StringName(input_prefix + base)
+
+
 func _physics_process(delta: float) -> void:
 	_move_forward(delta)
 	_move_sideways(delta)
@@ -109,7 +140,7 @@ func _physics_process(delta: float) -> void:
 	# anel do escudo; pisca nos últimos 3 s para avisar que vai acabar
 	shield_ring.visible = shield_timer > 3.0 or (shield_timer > 0.0 and int(shield_timer * 8.0) % 2 == 0)
 	fire_timer -= delta
-	if Input.is_action_pressed("shoot") and fire_timer <= 0.0:
+	if Input.is_action_pressed(_action("shoot")) and fire_timer <= 0.0:
 		_shoot()
 
 	if invulnerable_timer > 0.0:
@@ -160,7 +191,7 @@ func break_shield() -> void:
 	shield_ring.hide()
 	invulnerable_timer = shield_break_invulnerability
 	Sfx.play("shield_break")
-	Effects.shake(self, 3.0)
+	Effects.shake(self, 3.0, 0.25, self)
 
 
 func is_invulnerable() -> bool:
@@ -213,7 +244,7 @@ func die() -> void:
 	set_deferred("monitorable", false)
 	set_deferred("monitoring", false)
 	Effects.spawn(explosion_scene, global_position, get_parent())
-	Effects.shake(self, 6.0, 0.4)
+	Effects.shake(self, 6.0, 0.4, self)
 	Effects.hit_stop(self, 0.12)
 	died.emit()
 
@@ -228,7 +259,7 @@ func _touching_land() -> bool:
 
 
 func _move_forward(delta: float) -> void:
-	var throttle := Input.get_axis("slow_down", "speed_up")
+	var throttle := Input.get_axis(_action("slow_down"), _action("speed_up"))
 	var target := cruise_speed
 	if throttle > 0.0:
 		target = lerpf(cruise_speed, max_speed, throttle)
@@ -240,7 +271,7 @@ func _move_forward(delta: float) -> void:
 
 
 func _move_sideways(delta: float) -> void:
-	var direction := Input.get_axis("move_left", "move_right")
+	var direction := Input.get_axis(_action("move_left"), _action("move_right"))
 
 	velocity_x = move_toward(velocity_x, direction * side_speed, side_acceleration * delta)
 	position.x += velocity_x * delta
@@ -260,6 +291,7 @@ func _shoot() -> void:
 	for dx: float in offsets:
 		var bullet: PlayerBullet = bullet_scene.instantiate()
 		bullet.global_position = muzzle.global_position + Vector2(dx, 0)
+		bullet.shooter = self  # para os pontos irem para quem atirou (coop com pontos separados)
 		# Soma a velocidade do avião, para o tiro sempre se afastar na mesma velocidade na tela
 		bullet.speed += forward_speed
 		# O tiro vai para o mesmo nível do avião, para não acompanhar o movimento dele

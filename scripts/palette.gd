@@ -31,5 +31,9 @@ const TERRACOTTA := Color("#C0683F")       # N
 const TERRACOTTA_DARK := Color("#7E3F2A")  # n
 const TERRACOTTA_LIGHT := Color("#E8A06E") # m
 
+const LILAC := Color("#A77BE0")            # V (jogador 2)
+const LILAC_DARK := Color("#6D45A8")       # v
+const LILAC_LIGHT := Color("#D9C2F7")      # u
+
 ## Sombra: contorno k com 35% de opacidade (transparência, não cor nova)
 const SHADOW := Color("#22161E59")         # z

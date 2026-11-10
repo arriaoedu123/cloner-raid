@@ -47,6 +47,6 @@ func _on_area_entered(area: Area2D) -> void:
 		area.queue_free()
 		is_destroyed = true
 		Effects.spawn(explosion_scene, global_position, get_parent())
-		Effects.shake(self, 2.0)
+		Effects.shake(self, 2.0, 0.25, (area as PlayerBullet).shooter)
 		Sfx.play("explosion_small", 0.0, 1.0, 0.08)
 		queue_free()

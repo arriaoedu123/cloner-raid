@@ -8,6 +8,8 @@ static var fullscreen := false
 static var music_level := 8
 static var sfx_level := 8
 static var screen_shake := true
+## Coop: pontos juntos (um placar do time) ou separados (um placar por jogador)
+static var coop_shared_score := true
 
 static var _loaded := false
 
@@ -20,6 +22,7 @@ static func load_and_apply() -> void:
 		music_level = SaveData.load_value("options", "music_level", music_level)
 		sfx_level = SaveData.load_value("options", "sfx_level", sfx_level)
 		screen_shake = SaveData.load_value("options", "screen_shake", screen_shake)
+		coop_shared_score = SaveData.load_value("options", "coop_shared_score", coop_shared_score)
 		Controls.load_saved()  # teclas/botões remapeados pelo jogador
 	InputHint.watch()  # dicas na tela seguem o dispositivo em uso (teclado ou controle)
 	apply()
@@ -39,6 +42,7 @@ static func save() -> void:
 	SaveData.save_value("options", "music_level", music_level)
 	SaveData.save_value("options", "sfx_level", sfx_level)
 	SaveData.save_value("options", "screen_shake", screen_shake)
+	SaveData.save_value("options", "coop_shared_score", coop_shared_score)
 
 
 static func toggle_fullscreen() -> void:

@@ -12,7 +12,7 @@ Glifos: branco com os 2 pixels de baixo do corpo em cinza (luz de cima) e contor
 Acentos disponíveis: só Ç, Õ e Ã. Glifo com 7 linhas = só corpo; com 12 linhas = 3 de acento
 (em cima) + 7 de corpo + 2 de cedilha (embaixo).
 """
-from style import ASSETS_DIR, blank, outline, to_rows, write_png
+from style import ASSETS_DIR, blank, outline, player2, to_rows, write_png
 
 CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -:.!><ÇÕÃ"
 
@@ -115,7 +115,7 @@ def life_icon() -> list[str]:
 
 
 assert sorted(GLYPHS) == sorted(CHARSET), "CHARSET e GLYPHS diferentes"
-FRAMES = {"font": font_atlas(), "life": life_icon()}
+FRAMES = {"font": font_atlas(), "life": life_icon(), "life_p2": player2(life_icon())}
 
 if __name__ == "__main__":
     for name, grid in FRAMES.items():

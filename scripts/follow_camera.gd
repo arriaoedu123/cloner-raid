@@ -6,6 +6,9 @@ extends Camera2D
 @export var target: Node2D
 ## Onde o alvo fica na tela, medido do centro para baixo (px)
 @export var target_offset_y := 136.0
+## 0 = gruda no alvo. Acima disso (px/s), a câmera desliza até ele: no coop, ao trocar de
+## avião seguido, a tela não dá um "pulo".
+@export var max_follow_speed := 0.0
 
 var _shake_strength := 0.0
 var _shake_time := 0.0
@@ -17,8 +20,12 @@ func _ready() -> void:
 	follow()
 
 
-func _physics_process(_delta: float) -> void:
-	follow()
+func _physics_process(delta: float) -> void:
+	if max_follow_speed > 0.0 and is_instance_valid(target):
+		var goal := target.global_position.y - target_offset_y
+		position.y = move_toward(position.y, goal, max_follow_speed * delta)
+	else:
+		follow()
 
 
 func _process(delta: float) -> void:

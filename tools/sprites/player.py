@@ -8,7 +8,7 @@ Cada frame junta uma metade esquerda espelhada + uma metade direita.
 Na inclinação, asas, asinhas da cauda e cabine têm o MESMO formato dos dois lados: o lado de
 dentro da curva fica mais escuro e o de fora, mais claro (só a cor mostra para onde vira).
 """
-from style import ASSETS_DIR, mirror, write_png
+from style import ASSETS_DIR, mirror, player2, write_png
 
 HALF = 16
 
@@ -138,3 +138,5 @@ if __name__ == "__main__":
         path = ASSETS_DIR / "player" / f"{name}.png"
         write_png(grid, path)
         print("gerado:", path)
+        # mesmo desenho em lilás para o jogador 2 (coop)
+        write_png(player2(grid), ASSETS_DIR / "player" / f"{name}_p2.png")

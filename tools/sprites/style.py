@@ -29,6 +29,8 @@ PALETTE = {
     "S": "#8A8F99", "s": "#555A66", "w": "#F4F4F0",
     # terracota (telhados, madeira, terra batida)
     "N": "#C0683F", "n": "#7E3F2A", "m": "#E8A06E",
+    # lilás (avião do jogador 2: as mesmas letras do amarelo trocadas por Y->V, y->v, l->u)
+    "V": "#A77BE0", "v": "#6D45A8", "u": "#D9C2F7",
     # sombra embutida: contorno k com 35% de opacidade (igual ao shadow_material.tres).
     # Não é cor nova, é transparência; use só via with_shadow()
     "z": "#22161E59",
@@ -72,6 +74,14 @@ def write_png(grid: list[str], path: Path, scale: int = 1) -> None:
            + chunk(b"IEND", b""))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(png)
+
+
+## Troca o amarelo do jogador 1 pelo lilás do jogador 2 (mesmo desenho, outra cor).
+PLAYER2 = str.maketrans({"Y": "V", "y": "v", "l": "u"})
+
+
+def player2(grid: list[str]) -> list[str]:
+    return [row.translate(PLAYER2) for row in grid]
 
 
 def mirror(grid: list[str]) -> list[str]:

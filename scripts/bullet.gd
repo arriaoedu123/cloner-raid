@@ -12,6 +12,8 @@ extends Area2D
 const TIP := Vector2(0, -4)
 
 var river: River
+## Avião que atirou (quem leva os pontos se o alvo cair)
+var shooter: Player
 
 
 func _ready() -> void:
