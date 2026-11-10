@@ -22,11 +22,19 @@ Feito em [Godot 4.7](https://godotengine.org/) (GDScript).
 ## Download
 
 Os executáveis para **Windows**, **macOS** e **Linux** ficam na página de
-[Releases](../../releases). Baixe o arquivo do seu sistema, descompacte e jogue.
+[Releases](../../releases). Baixe o `.zip` do seu sistema, descompacte e jogue.
 
-- **macOS:** o app não é assinado. Na primeira vez, clique com o botão direito no app →
-  **Abrir** → **Abrir**.
-- **Linux:** se precisar, dê permissão de execução: `chmod +x ClonerRaid.x86_64`.
+O jogo não tem assinatura paga da Microsoft nem da Apple, então na primeira vez o sistema
+avisa que o desenvolvedor não é conhecido:
+
+- **Windows:** se aparecer "O Windows protegeu o computador", clique em **Mais informações** →
+  **Executar assim mesmo**.
+- **macOS:** abra o app uma vez (o Mac vai bloquear), depois vá em **Ajustes do Sistema →
+  Privacidade e Segurança**, role até o aviso do Cloner Raid e clique em **Abrir Mesmo Assim**.
+  Se o Mac disser que o app "está danificado", rode no Terminal, na pasta onde ele está:
+  `xattr -dr com.apple.quarantine ClonerRaid.app`
+- **Linux:** se não abrir com dois cliques, dê permissão de execução no terminal:
+  `chmod +x ClonerRaid.x86_64`
 
 ## Como jogar
 
