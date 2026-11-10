@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/explosion.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_0.png" id="2_f0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_1.png" id="3_f1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_2.png" id="4_f2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_3.png" id="5_f3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_4.png" id="6_f4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/explosion_5.png" id="7_f5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="8_spark"]
+
+[sub_resource type="Gradient" id="Gradient_sparks"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.3, 0.6, 0.85)
+colors = PackedColorArray(1, 0.886, 0.478, 1, 1, 0.478, 0.102, 1, 0.659, 0.149, 0.188, 1, 0.333, 0.353, 0.4, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_explosion"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_f0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_f1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_f2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_f3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_f4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_f5")
+}],
+"loop": false,
+"name": &"explode",
+"speed": 14.0
+}]
+
+[node name="Explosion" type="AnimatedSprite2D"]
+sprite_frames = SubResource("SpriteFrames_explosion")
+animation = &"explode"
+script = ExtResource("1_script")
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+show_behind_parent = true
+emitting = false
+amount = 16
+lifetime = 0.55
+one_shot = true
+explosiveness = 1.0
+texture = ExtResource("8_spark")
+direction = Vector2(0, -1)
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 50.0
+initial_velocity_max = 150.0
+damping_min = 120.0
+damping_max = 200.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color_ramp = SubResource("Gradient_sparks")

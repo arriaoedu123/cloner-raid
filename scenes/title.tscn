@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://cr1t45oqspf2w"]
+
+[ext_resource type="Script" uid="uid://csrn2iipl5tvm" path="res://scripts/title.gd" id="1_title"]
+[ext_resource type="Script" uid="uid://d2yb7587yagex" path="res://scripts/water.gd" id="2_water"]
+[ext_resource type="Shader" uid="uid://wq5kb1lk4pa1" path="res://assets/shaders/water.gdshader" id="3_water_shader"]
+[ext_resource type="Script" uid="uid://2pcwua453ehg" path="res://scripts/river.gd" id="4_river"]
+[ext_resource type="Texture2D" uid="uid://b06oj44ljbchr" path="res://assets/sprites/player/plane_center.png" id="5_plane"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="6_shadow_mat"]
+[ext_resource type="Script" uid="uid://bghnkmwln43mq" path="res://scripts/title_overlay.gd" id="7_overlay"]
+[ext_resource type="Script" uid="uid://lur6l27m5xys" path="res://scripts/music.gd" id="8_music"]
+[ext_resource type="Script" uid="uid://bi6np7pddb4n6" path="res://scripts/options_menu.gd" id="9_options"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+shader = ExtResource("3_water_shader")
+shader_parameter/water_color = Color(0.122, 0.435, 0.71, 1)
+shader_parameter/ripple_color = Color(0.247, 0.663, 0.961, 1)
+shader_parameter/sparkle_color = Color(0.741, 0.902, 1, 1)
+shader_parameter/cell_size = Vector2(24, 12)
+shader_parameter/density = 0.3
+shader_parameter/blink_speed = 1.5
+
+[node name="Title" type="Node2D" unique_id=1546323200]
+script = ExtResource("1_title")
+
+[node name="Water" type="ColorRect" parent="." unique_id=882047524]
+material = SubResource("ShaderMaterial_water")
+script = ExtResource("2_water")
+
+[node name="Music" type="Node" parent="." unique_id=1864568997]
+script = ExtResource("8_music")
+
+[node name="River" type="Node2D" parent="." unique_id=1351303437]
+script = ExtResource("4_river")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=570542600]
+process_callback = 0
+
+[node name="PlaneShadow" type="Sprite2D" parent="Camera2D" unique_id=1954605332]
+material = ExtResource("6_shadow_mat")
+position = Vector2(6, -18)
+texture = ExtResource("5_plane")
+
+[node name="Plane" type="Sprite2D" parent="Camera2D" unique_id=1779120662]
+position = Vector2(0, -30)
+texture = ExtResource("5_plane")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1597109072]
+
+[node name="Overlay" type="Control" parent="UI" unique_id=309349065 node_paths=PackedStringArray("title")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_overlay")
+title = NodePath("../..")
+
+[node name="OptionsMenu" type="Control" parent="UI" unique_id=1187441768]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_options")

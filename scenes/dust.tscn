@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="1_spark"]
+
+[sub_resource type="Gradient" id="Gradient_dust"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.35, 0.7)
+colors = PackedColorArray(0.647, 0.839, 0.42, 1, 0.753, 0.408, 0.247, 1, 0.494, 0.247, 0.165, 1)
+
+[node name="Dust" type="CPUParticles2D"]
+emitting = true
+amount = 5
+lifetime = 0.35
+one_shot = true
+explosiveness = 1.0
+texture = ExtResource("1_spark")
+direction = Vector2(0, 1)
+spread = 70.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 50.0
+damping_min = 60.0
+damping_max = 90.0
+color_ramp = SubResource("Gradient_dust")
+
+[connection signal="finished" from="." to="." method="queue_free"]

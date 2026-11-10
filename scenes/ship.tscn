@@ -1,0 +1,80 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ship/ship_0.png" id="2_ship0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ship/ship_1.png" id="3_ship1"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="4_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="5_despawn"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="6_spark"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="7_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="8_shadow_mat"]
+
+[sub_resource type="Gradient" id="Gradient_wake"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.3, 0.65)
+colors = PackedColorArray(0.957, 0.957, 0.941, 1, 0.741, 0.902, 1, 1, 0.247, 0.663, 0.961, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ship"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_ship0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_ship1")
+}],
+"loop": true,
+"name": &"sail",
+"speed": 4.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ship"]
+size = Vector2(32, 12)
+
+[node name="Ship" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 35.0
+half_width = 18.0
+max_hits = 3
+points = 200
+explosion_scene = ExtResource("4_explosion")
+explosion_offsets = PackedVector2Array(-10, 0, 10, 0)
+destroy_shake = 3.0
+destroy_hit_stop = 0.05
+animate_while_asleep = false
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("8_shadow_mat")
+position = Vector2(2, 3)
+script = ExtResource("7_shadow")
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+position = Vector2(-18, 0)
+emitting = false
+amount = 18
+lifetime = 1.2
+local_coords = false
+texture = ExtResource("6_spark")
+direction = Vector2(-1, 0)
+spread = 25.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 8.0
+initial_velocity_max = 18.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color_ramp = SubResource("Gradient_wake")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_ship")
+animation = &"sail"
+autoplay = "sail"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(1, 0)
+shape = SubResource("RectangleShape2D_ship")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-20, -9, 40, 18)
+script = ExtResource("5_despawn")

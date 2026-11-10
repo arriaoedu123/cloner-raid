@@ -1,0 +1,81 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/jet/jet_0.png" id="2_jet0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/jet/jet_1.png" id="3_jet1"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="4_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="5_despawn"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="6_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="7_shadow_mat"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="8_spark"]
+
+[sub_resource type="Gradient" id="Gradient_trail"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.8)
+colors = PackedColorArray(1, 0.886, 0.478, 1, 1, 0.478, 0.102, 1, 0.541, 0.561, 0.6, 1, 0.333, 0.353, 0.4, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jet"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_jet0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_jet1")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 12.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(22, 4)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wings"]
+size = Vector2(6, 16)
+
+[node name="Jet" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 170.0
+half_width = 14.0
+points = 150
+explosion_scene = ExtResource("4_explosion")
+crosses_screen = true
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("7_shadow_mat")
+position = Vector2(6, 12)
+script = ExtResource("6_shadow")
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+position = Vector2(-14, 0)
+emitting = false
+amount = 12
+lifetime = 0.35
+local_coords = false
+texture = ExtResource("8_spark")
+direction = Vector2(-1, 0)
+spread = 12.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 40.0
+color_ramp = SubResource("Gradient_trail")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_jet")
+animation = &"fly"
+autoplay = "fly"
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(1, 0)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="WingsCollision" type="CollisionShape2D" parent="."]
+position = Vector2(-1, 0)
+shape = SubResource("RectangleShape2D_wings")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-14, -11, 28, 22)
+script = ExtResource("5_despawn")

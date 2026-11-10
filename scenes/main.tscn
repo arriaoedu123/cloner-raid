@@ -1,0 +1,91 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/helicopter.tscn" id="2_helicopter"]
+[ext_resource type="Script" path="res://scripts/river.gd" id="3_river"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="5_camera"]
+[ext_resource type="PackedScene" path="res://scenes/fuel_depot.tscn" id="6_fuel_depot"]
+[ext_resource type="Script" path="res://scripts/fuel_gauge.gd" id="7_fuel_gauge"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ship.tscn" id="9_ship"]
+[ext_resource type="PackedScene" path="res://scenes/jet.tscn" id="10_jet"]
+[ext_resource type="PackedScene" path="res://scenes/bridge.tscn" id="11_bridge"]
+[ext_resource type="Script" path="res://scripts/water.gd" id="12_water"]
+[ext_resource type="Shader" path="res://assets/shaders/water.gdshader" id="13_water_shader"]
+[ext_resource type="Script" path="res://scripts/music.gd" id="14_music"]
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="15_pause"]
+[ext_resource type="Script" path="res://scripts/options_menu.gd" id="16_options"]
+[ext_resource type="PackedScene" path="res://scenes/power_up.tscn" id="17_power_up"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+shader = ExtResource("13_water_shader")
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+helicopter_scene = ExtResource("2_helicopter")
+ship_scene = ExtResource("9_ship")
+jet_scene = ExtResource("10_jet")
+bridge_scene = ExtResource("11_bridge")
+fuel_depot_scene = ExtResource("6_fuel_depot")
+power_up_scene = ExtResource("17_power_up")
+
+[node name="Water" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_water")
+script = ExtResource("12_water")
+
+[node name="Music" type="Node" parent="." node_paths=PackedStringArray("game")]
+script = ExtResource("14_music")
+game = NodePath("..")
+
+[node name="River" type="Node2D" parent="."]
+script = ExtResource("3_river")
+
+[node name="Objects" type="Node2D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("4_player")]
+position = Vector2(320, 316)
+
+[node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
+process_callback = 0
+script = ExtResource("5_camera")
+target = NodePath("../Player")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="FuelGauge" type="Control" parent="HUD" node_paths=PackedStringArray("player")]
+layout_mode = 3
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 104.0
+offset_bottom = 16.0
+script = ExtResource("7_fuel_gauge")
+player = NodePath("../../Player")
+
+[node name="Overlay" type="Control" parent="HUD" node_paths=PackedStringArray("game")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("8_hud")
+game = NodePath("../..")
+
+[node name="PauseMenu" type="Control" parent="HUD" node_paths=PackedStringArray("game", "options_menu")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("15_pause")
+game = NodePath("../..")
+options_menu = NodePath("../OptionsMenu")
+
+[node name="OptionsMenu" type="Control" parent="HUD"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("16_options")

@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/bullet.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bullet/player_bullet.png" id="2_texture"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="3_shadow_mat"]
+[ext_resource type="PackedScene" path="res://scenes/dust.tscn" id="4_dust"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bullet"]
+size = Vector2(4, 6)
+
+[node name="Bullet" type="Area2D"]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_script")
+dust_scene = ExtResource("4_dust")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+show_behind_parent = true
+material = ExtResource("3_shadow_mat")
+position = Vector2(6, 12)
+texture = ExtResource("2_texture")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -1)
+shape = SubResource("RectangleShape2D_bullet")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-2, -4, 4, 8)

@@ -1,0 +1,141 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/plane_center.png" id="2_center"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/plane_left_half.png" id="3_left_half"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/plane_left_full.png" id="4_left_full"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/plane_right_half.png" id="5_right_half"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/plane_right_full.png" id="6_right_full"]
+[ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="7_bullet"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="8_explosion"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="9_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="10_shadow_mat"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="11_spark"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/shield_0.png" id="12_shield0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/shield_1.png" id="13_shield1"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_shield"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("12_shield0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_shield1")
+}],
+"loop": true,
+"name": &"shine",
+"speed": 6.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_trail"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.8)
+colors = PackedColorArray(1, 0.886, 0.478, 1, 1, 0.478, 0.102, 1, 0.541, 0.561, 0.6, 1, 0.333, 0.353, 0.4, 1)
+
+[sub_resource type="Gradient" id="Gradient_smoke"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.5)
+colors = PackedColorArray(0.541, 0.561, 0.6, 1, 0.333, 0.353, 0.4, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_plane"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_center")
+}],
+"loop": true,
+"name": &"center",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_left_half")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_left_full")
+}],
+"loop": false,
+"name": &"left",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_right_half")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_right_full")
+}],
+"loop": false,
+"name": &"right",
+"speed": 12.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_body"]
+radius = 3.0
+height = 26.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wings"]
+size = Vector2(24, 4)
+
+[node name="Player" type="Area2D"]
+script = ExtResource("1_script")
+bullet_scene = ExtResource("7_bullet")
+explosion_scene = ExtResource("8_explosion")
+
+[node name="Muzzle" type="Marker2D" parent="."]
+position = Vector2(0, -17)
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("10_shadow_mat")
+position = Vector2(6, 12)
+script = ExtResource("9_shadow")
+
+[node name="EngineTrail" type="CPUParticles2D" parent="."]
+position = Vector2(0, 15)
+amount = 12
+lifetime = 0.35
+local_coords = false
+texture = ExtResource("11_spark")
+direction = Vector2(0, 1)
+spread = 12.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 40.0
+color_ramp = SubResource("Gradient_trail")
+
+[node name="LowFuelSmoke" type="CPUParticles2D" parent="."]
+position = Vector2(0, 6)
+emitting = false
+amount = 10
+lifetime = 0.7
+local_coords = false
+texture = ExtResource("11_spark")
+direction = Vector2(0, 1)
+spread = 35.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 10.0
+initial_velocity_max = 25.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color_ramp = SubResource("Gradient_smoke")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_plane")
+animation = &"center"
+autoplay = "center"
+
+[node name="ShieldRing" type="AnimatedSprite2D" parent="."]
+visible = false
+position = Vector2(0, -1)
+sprite_frames = SubResource("SpriteFrames_shield")
+animation = &"shine"
+autoplay = "shine"
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CapsuleShape2D_body")
+
+[node name="WingsCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 1)
+shape = SubResource("RectangleShape2D_wings")

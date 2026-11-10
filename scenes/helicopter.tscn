@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helicopter/heli_0.png" id="2_heli0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helicopter/heli_1.png" id="3_heli1"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="4_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="5_despawn"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="6_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="7_shadow_mat"]
+[ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="8_spark"]
+
+[sub_resource type="Gradient" id="Gradient_spray"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.5)
+colors = PackedColorArray(0.741, 0.902, 1, 1, 0.247, 0.663, 0.961, 1)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_heli"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_heli0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_heli1")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 16.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_heli"]
+size = Vector2(20, 8)
+
+[node name="Helicopter" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+explosion_scene = ExtResource("4_explosion")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("7_shadow_mat")
+position = Vector2(4, 8)
+script = ExtResource("6_shadow")
+
+[node name="Downwash" type="CPUParticles2D" parent="."]
+position = Vector2(4, 8)
+amount = 14
+lifetime = 0.5
+local_coords = false
+texture = ExtResource("8_spark")
+emission_shape = 2
+emission_sphere_radius = 9.0
+direction = Vector2(1, 0)
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 35.0
+initial_velocity_max = 60.0
+damping_min = 60.0
+damping_max = 90.0
+color_ramp = SubResource("Gradient_spray")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_heli")
+animation = &"fly"
+autoplay = "fly"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_heli")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-12, -12, 24, 24)
+script = ExtResource("5_despawn")

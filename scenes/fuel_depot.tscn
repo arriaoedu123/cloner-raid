@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/fuel_depot.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fuel_depot/fuel_depot.png" id="2_texture"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="3_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="4_despawn"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="5_shadow_mat"]
+[ext_resource type="Script" path="res://scripts/floating.gd" id="6_floating"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_depot"]
+size = Vector2(28, 12)
+
+[node name="FuelDepot" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+explosion_scene = ExtResource("3_explosion")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+show_behind_parent = true
+material = ExtResource("5_shadow_mat")
+position = Vector2(2, 3)
+texture = ExtResource("2_texture")
+
+[node name="Floating" type="Node2D" parent="."]
+script = ExtResource("6_floating")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_depot")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-15, -9, 30, 18)
+script = ExtResource("4_despawn")

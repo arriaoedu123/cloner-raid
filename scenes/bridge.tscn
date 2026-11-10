@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bridge/bridge_0.png" id="2_bridge"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="3_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="4_despawn"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bridge"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_bridge")
+}],
+"loop": true,
+"name": &"default",
+"speed": 1.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bridge"]
+size = Vector2(160, 16)
+
+[node name="Bridge" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 0.0
+half_width = 0.0
+max_hits = 3
+points = 500
+explosion_scene = ExtResource("3_explosion")
+explosion_offsets = PackedVector2Array(-60, 0, -20, 0, 20, 0, 60, 0)
+destroy_shake = 5.0
+destroy_hit_stop = 0.1
+destroy_sound = "explosion_big"
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_bridge")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_bridge")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-88, -10, 176, 20)
+script = ExtResource("4_despawn")

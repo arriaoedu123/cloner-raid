@@ -1,0 +1,17 @@
+# Arquivos de trabalho locais (não vão para o GitHub)
+CLAUDE.md
+ROADMAP.md
+
+# Godot 4 (padrão criado pelo editor): cache recriado ao abrir o projeto e build de Android
+.godot/
+/android/
+
+# Prévias de som geradas pelo tools/audio/sfx.py preview
+audio_preview/
+
+# Executáveis exportados (vão para as Releases, não para o repositório)
+builds/
+
+# Python e sistema
+__pycache__/
+.DS_Store
