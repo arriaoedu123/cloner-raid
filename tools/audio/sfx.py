@@ -137,6 +137,8 @@ SOUNDS = {
     "power_up": lambda: seq(*[tone(0.035, f, vol=0.2, decay=False) for f in (440, 660, 550, 830, 660, 990, 830, 1245)]),
     # escudo absorveu uma batida: estalo de vidro (chiado agudo) + tom caindo
     "shield_break": lambda: mix(noise(0.18, 0.4, 1, 3, seed=21), tone(0.25, 1400, 300, "tri", 0.35)),
+    # disparo da torre: estouro grave e longo (ruído ficando grave + baque descendo)
+    "cannon": lambda: mix(noise(0.32, 0.5, 4, 20, seed=31), tone(0.3, 150, 50, "tri", 0.45)),
 }
 
 PREVIEW_DIR = Path(__file__).resolve().parents[2] / "audio_preview"

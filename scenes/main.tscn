@@ -21,6 +21,7 @@
 [ext_resource type="PackedScene" path="res://scenes/mine.tscn" id="19_mine"]
 [ext_resource type="PackedScene" path="res://scenes/submarine.tscn" id="20_submarine"]
 [ext_resource type="PackedScene" path="res://scenes/hovercraft.tscn" id="21_hovercraft"]
+[ext_resource type="PackedScene" path="res://scenes/turret.tscn" id="22_turret"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 shader = ExtResource("13_water_shader")
@@ -34,6 +35,7 @@ speedboat_scene = ExtResource("18_speedboat")
 mine_scene = ExtResource("19_mine")
 submarine_scene = ExtResource("20_submarine")
 hovercraft_scene = ExtResource("21_hovercraft")
+turret_scene = ExtResource("22_turret")
 bridge_scene = ExtResource("11_bridge")
 fuel_depot_scene = ExtResource("6_fuel_depot")
 power_up_scene = ExtResource("17_power_up")

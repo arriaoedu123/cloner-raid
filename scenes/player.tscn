@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/explosion/spark.png" id="11_spark"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player/shield_0.png" id="12_shield0"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player/shield_1.png" id="13_shield1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/shield_2.png" id="13_shield2"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_shield"]
 animations = [{
@@ -22,6 +23,9 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("13_shield1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_shield2")
 }],
 "loop": true,
 "name": &"shine",

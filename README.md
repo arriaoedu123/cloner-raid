@@ -49,14 +49,24 @@ avisa que o desenvolvedor não é conhecido:
   recomeça logo depois da última ponte destruída.
 - **Combo:** derrube inimigos em sequência (3 s entre um e outro) para multiplicar os pontos
   até **x4**. Atirar num posto quebra o combo.
+- **Inimigos:** novos tipos vão aparecendo conforme você avança.
+  - **Helicóptero, navio e jato** desde o começo (o navio aguenta 3 tiros; o jato cruza a tela).
+  - **Lancha** (trecho 3): rápida, cai com um tiro.
+  - **Minas** (trecho 4): campos de 2 ou 3. Encostar derruba; um tiro explode o campo em cadeia
+    e leva junto os inimigos perto (que contam para o combo).
+  - **Aerobarco** (trecho 5): espera na margem e atravessa o rio por cima da terra. Só leva tiro
+    sobre a água.
+  - **Submarino** (trecho 6): mergulha e sobe. Submerso, não leva tiro (mas uma mina pega).
+  - **Torre** (trecho 8): na margem, pisca e dispara contra o avião. Desvie para o lado.
 - **Power-ups:** caixas flutuando no rio. Passe por cima para pegar; se atirar nelas, elas
   explodem.
   - **Tiro duplo:** dois tiros por disparo durante 10 s.
-  - **Escudo:** segura uma batida em inimigo durante 15 s (não protege da margem nem da falta
-    de combustível).
+  - **Escudo:** segura uma batida em inimigo ou um tiro da torre durante 15 s (não protege da
+    margem nem da falta de combustível).
   - **Vida extra:** rara, só nos trechos mais avançados.
 - **Vidas extras:** também vêm com os pontos, cada vez mais caras (5 mil, 15 mil, 30 mil...).
-- A dificuldade cresce a cada ponte: rio mais estreito e curvo, mais inimigos e mais rápidos.
+- A dificuldade cresce a cada ponte: rio mais estreito e curvo, ilhas, mais inimigos e mais
+  rápidos.
 
 ## Controles
 
@@ -100,6 +110,10 @@ Quando o amigo entra, os dois vão para o **saguão**: o anfitrião escolhe se o
 juntos ou separados e começa a partida quando estiverem prontos. Cada um pilota o seu avião
 com o próprio teclado ou controle. Na Steam, o jogo aparece como **"Spacewar"**: é o app de testes da Valve
 que o Cloner Raid usa para as salas, já que ele não está publicado na loja.
+
+Os dois precisam estar com a **mesma versão** do jogo: com versões diferentes, quem tenta
+entrar vê "VERSÃO DIFERENTE DO JOGO". Se a conexão cair no meio da partida, os dois voltam ao
+título com um aviso.
 
 ### Regras do coop
 
@@ -146,4 +160,4 @@ partir de uma semente, então, ao recomeçar depois de uma queda, ele sai exatam
 
 ## Próximos passos
 
-Depois da versão 1.0: **modo cooperativo** local e online.
+Ideia para depois: um **desafio diário**, com o mesmo rio para todo mundo no mesmo dia.

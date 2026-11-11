@@ -18,6 +18,7 @@ const SOUNDS := {
 	"ui_select": preload("res://assets/audio/sfx/ui_select.wav"),
 	"power_up": preload("res://assets/audio/sfx/power_up.wav"),
 	"shield_break": preload("res://assets/audio/sfx/shield_break.wav"),
+	"cannon": preload("res://assets/audio/sfx/cannon.wav"),
 }
 const VOICES := 12  # sons que podem tocar ao mesmo tempo
 

@@ -39,7 +39,7 @@ extends Area2D
 ## Cena instanciada a cada disparo
 @export var bullet_scene: PackedScene
 ## Tempo mínimo entre tiros (s); segurar o botão dispara em sequência
-@export var fire_cooldown := 0.18
+@export var fire_cooldown := 0.22
 
 @export_group("Power-ups")
 ## Duração do tiro duplo (s); a cadência continua a mesma, só saem dois tiros lado a lado

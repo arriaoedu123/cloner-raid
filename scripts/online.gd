@@ -27,7 +27,7 @@ signal room_closed(message: String)
 const APP_ID := 480
 const GAME_TAG := "clonerraid"
 ## Os dois precisam rodar a mesma versão: o rio sai igual pela semente só com o mesmo código
-const VERSION := "1.1.1"
+const VERSION := "1.2.0"
 ## Letras do código da sala (sem I, O, 0 e 1, que se confundem)
 const CODE_CHARS := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 const CODE_LENGTH := 6

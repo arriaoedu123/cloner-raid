@@ -4,6 +4,8 @@ extends Node2D
 ## 1 px a cada BOB_STEP_MS e uma espuma tracejada contorna o desenho na linha d'água.
 ## Vai como filho do objeto, DEPOIS da Shadow e ANTES do Sprite2D: assim a espuma fica por
 ## cima da sombra e por baixo do objeto. Sombra, espuma e colisão ficam paradas.
+## A espuma só aparece onde é água (objeto encostado na margem, como a torre, não espuma na
+## grama). Com `bobs = false` (concreto fixo) só a espuma, sem balançar.
 
 const BOB_STEP_MS := 500
 ## Espuma anda 1 px no mesmo ritmo da espuma das margens
@@ -12,11 +14,14 @@ const FOAM_STEP_MS := River.FOAM_STEP_MS
 ## Sprite que balança (a espuma segue o contorno da textura dele). Pode ser um Sprite2D ou um
 ## AnimatedSprite2D (mina): nesse caso usa o 1º frame, então os frames precisam ter o mesmo contorno.
 @export var sprite_path: NodePath = ^"../Sprite2D"
+## Balança o sprite (false: só a espuma, para o que é fixo, como a plataforma da torre)
+@export var bobs := true
 
 ## Pixels de água colados em cada desenho (calculado uma vez por textura)
 static var _foam_cache := {}
 
 var _foam_points := PackedVector2Array()
+var river: River
 
 @onready var sprite: Node2D = get_node(sprite_path)
 
@@ -27,20 +32,33 @@ func _ready() -> void:
 	if not _foam_cache.has(texture):
 		_foam_cache[texture] = _outline_points(texture)
 	_foam_points = _foam_cache[texture]
+	river = get_tree().get_first_node_in_group("river") as River
 
 
 func _process(_delta: float) -> void:
-	# cada objeto com sua fase (pela posição), para não balançarem todos juntos
-	var t := Time.get_ticks_msec() + int(global_position.x) * 37
-	sprite.position.y = -1.0 if (t / BOB_STEP_MS) % 2 == 0 else 0.0
+	if bobs:
+		# cada objeto com sua fase (pela posição), para não balançarem todos juntos
+		var t := Time.get_ticks_msec() + int(global_position.x) * 37
+		sprite.position.y = -1.0 if (t / BOB_STEP_MS) % 2 == 0 else 0.0
 	queue_redraw()
 
 
 func _draw() -> void:
 	var phase := int(Time.get_ticks_msec() / FOAM_STEP_MS) % 4
 	for p in _foam_points:
-		if posmod(int(p.x + p.y) + phase, 4) < 2:
+		if posmod(int(p.x + p.y) + phase, 4) < 2 and _open_water(global_position + p + Vector2(0.5, 0.5)):
 			draw_rect(Rect2(p, Vector2.ONE), Palette.BLUE_LIGHT)
+
+
+## Água sem terra colada (nos 4 lados): na terra não tem espuma, e colado nela o rio já desenha a
+## espuma da margem (as duas juntas ficam mais cheias e piscam, fora de fase).
+func _open_water(point: Vector2) -> bool:
+	if river == null:
+		return true
+	for d: Vector2 in [Vector2.ZERO, Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
+		if not river.is_water(point + d):
+			return false
+	return true
 
 
 ## Pixels transparentes vizinhos (4 lados) de um pixel do desenho, em coordenadas locais

@@ -1,0 +1,137 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_idle_down.png" id="2_idle_down"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_idle_left.png" id="2_idle_left"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_idle_right.png" id="2_idle_right"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_warn_down.png" id="3_warn_down"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_warn_left.png" id="3_warn_left"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_warn_right.png" id="3_warn_right"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_fire_down.png" id="4_fire_down"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_fire_left.png" id="4_fire_left"]
+[ext_resource type="Texture2D" path="res://assets/sprites/turret/turret_fire_right.png" id="4_fire_right"]
+[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="5_explosion"]
+[ext_resource type="Script" path="res://scripts/despawn_below_screen.gd" id="6_despawn"]
+[ext_resource type="Script" path="res://scripts/flying_shadow.gd" id="7_shadow"]
+[ext_resource type="Material" path="res://assets/shaders/shadow_material.tres" id="8_shadow_mat"]
+[ext_resource type="Script" path="res://scripts/cannon.gd" id="9_cannon"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_shot.tscn" id="10_shot"]
+[ext_resource type="Script" path="res://scripts/floating.gd" id="11_floating"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_turret"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_idle_down")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_idle_left")
+}],
+"loop": true,
+"name": &"idle_left",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_idle_right")
+}],
+"loop": true,
+"name": &"idle_right",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_warn_down")
+}],
+"loop": true,
+"name": &"warn_down",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_warn_left")
+}],
+"loop": true,
+"name": &"warn_left",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_warn_right")
+}],
+"loop": true,
+"name": &"warn_right",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_fire_down")
+}],
+"loop": true,
+"name": &"fire_down",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_fire_left")
+}],
+"loop": true,
+"name": &"fire_left",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_fire_right")
+}],
+"loop": true,
+"name": &"fire_right",
+"speed": 1.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_turret"]
+size = Vector2(22, 22)
+
+[node name="Turret" type="Area2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 0.0
+half_width = 13.0
+max_hits = 2
+points = 300
+explosion_scene = ExtResource("5_explosion")
+explosion_offsets = PackedVector2Array(-6, -4, 6, 4)
+destroy_shake = 3.0
+destroy_hit_stop = 0.05
+destroy_sound = "explosion_big"
+
+[node name="Shadow" type="Sprite2D" parent="."]
+material = ExtResource("8_shadow_mat")
+position = Vector2(2, 3)
+script = ExtResource("7_shadow")
+
+[node name="Floating" type="Node2D" parent="."]
+script = ExtResource("11_floating")
+sprite_path = NodePath("../AnimatedSprite2D")
+bobs = false
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_turret")
+animation = &"idle_down"
+autoplay = "idle_down"
+
+[node name="Cannon" type="Node2D" parent="."]
+script = ExtResource("9_cannon")
+shot_scene = ExtResource("10_shot")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_turret")
+
+[node name="DespawnBelowScreen" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-14, -14, 28, 28)
+script = ExtResource("6_despawn")

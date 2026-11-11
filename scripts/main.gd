@@ -52,6 +52,9 @@ const COOP_SPREAD := 30.0
 ## Campo de minas: (x em px, linhas abaixo) de cada mina, em ordem (2 minas = as 2 primeiras).
 ## Separadas por ~16 px: menos que o raio da explosão (40), então explodem em cadeia.
 const MINE_FIELD := [Vector2(0, 0), Vector2(-14, 3), Vector2(14, 3)]
+## Torre: caminho do tiro que precisa estar livre embaixo dela (px de comprimento e de largura)
+const TURRET_LANE := 96.0
+const TURRET_LANE_W := 4
 const RESPAWN_LOOKAHEAD_ROWS := 8
 const RESPAWN_CLEARANCE := 20.0
 const RESPAWN_MAX_WAIT := 3.0
@@ -130,6 +133,12 @@ class ScoreBoard:
 @export_range(0.0, 1.0) var hovercraft_chance := 0.03
 ## Primeira seção com aerobarco
 @export var hovercraft_first_section := 5
+@export var turret_scene: PackedScene
+## Chance de sortear uma torre (atira no avião) em cada linha liberada do rio (0–1). Cerca de
+## metade não nasce (sem caminho livre para o tiro, numa curva), por isso o valor é o dobro.
+@export_range(0.0, 1.0) var turret_chance := 0.05
+## Primeira seção com torre
+@export var turret_first_section := 8
 ## Fração dos inimigos de patrulha que nascem parados e só acordam com o avião perto
 @export_range(0.0, 1.0) var sleeper_chance := 0.5
 ## Faixa de altura na tela (px do topo) em que os dorminhocos acordam: varia para surpreender
@@ -176,6 +185,7 @@ class ScoreBoard:
 @export var hard_mines_per_field := 3
 @export_range(0.0, 1.0) var hard_submarine_chance := 0.05
 @export_range(0.0, 1.0) var hard_hovercraft_chance := 0.05
+@export_range(0.0, 1.0) var hard_turret_chance := 0.09
 @export_range(0.0, 1.0) var hard_fuel_chance := 0.02
 @export var hard_max_rows_without_fuel := 120
 @export var hard_min_rows_between_spawns := 8
@@ -523,9 +533,43 @@ func _on_river_row_created(index: int, y: float, left: float, right: float) -> v
 	elif river.section_of(index) >= hovercraft_first_section \
 			and rng.randf() < lerpf(hovercraft_chance, hard_hovercraft_chance, d):
 		_spawn_hovercraft(y, left, right, d)
+	elif river.section_of(index) >= turret_first_section \
+			and rng.randf() < lerpf(turret_chance, hard_turret_chance, d):
+		_spawn_turret(y, left, right)
 	else:
 		return
 	_last_spawn_row = index
+
+
+## Torre: plataforma de concreto construída na margem (lado sorteado), com o centro na linha
+## da margem: metade na terra, metade na água. Só a metade sobre a água leva tiro (o tiro do
+## jogador para na terra), então ela só nasce com caminho livre para o tiro (_turret_lane_free).
+## Atira sozinha (nó Cannon).
+func _spawn_turret(y: float, left: float, right: float) -> void:
+	var on_left := river.rng.randf() < 0.5
+	var x := left if on_left else right
+	if _turret_lane_free(Vector2(x, y + River.ROW_H / 2.0), 1.0 if on_left else -1.0):
+		_add_object(turret_scene.instantiate(), x, y)
+
+
+## Tem uma faixa de água de TURRET_LANE_W px de largura, embaixo da metade da torre que fica na
+## água (`side` = para que lado é a água), livre por TURRET_LANE px? Numa curva a margem logo
+## abaixo avança sobre ela e o tiro bateria na terra (medido: ~metade das torres ficava assim).
+func _turret_lane_free(center: Vector2, side: float) -> bool:
+	var run := 0
+	for dx in range(1, 12):
+		var lane_x := center.x + side * dx
+		var free := true
+		var lane_y := center.y + 11.0  # borda de baixo da plataforma
+		while lane_y <= center.y + 11.0 + TURRET_LANE:
+			if not river.is_water(Vector2(lane_x, lane_y)):
+				free = false
+				break
+			lane_y += River.ROW_H / 2.0
+		run = run + 1 if free else 0
+		if run >= TURRET_LANE_W:
+			return true
+	return false
 
 
 ## Aerobarco: parado na terra ao lado do rio (lado sorteado), virado para a água. Quando o
@@ -556,7 +600,7 @@ func _spawn_mine_field(y: float, channels: Array, difficulty: float) -> void:
 		var row_y := y + spot.y * River.ROW_H
 		var center := Vector2(x + spot.x, row_y + River.ROW_H / 2.0)
 		if river.is_water(center + Vector2(-9, 0)) and river.is_water(center + Vector2(9, 0)):
-			_add_object(mine_scene.instantiate(), center.x, row_y)
+			_add_object(mine_scene.instantiate(), center.x, row_y, "m%d" % i)  # 2 minas na mesma linha
 
 
 func _spawn_bridge(section: int, y: float, left: float, right: float) -> void:
@@ -596,11 +640,13 @@ func _spawn(node: Node2D, y: float, channels: Array, margin: float) -> void:
 
 
 ## Põe o objeto no centro da linha do rio que começa em `y`, no x dado, e liga os sinais.
-func _add_object(node: Node2D, x: float, y: float) -> void:
+## `suffix` diferencia objetos na mesma linha (minas do campo): sem ele o Godot dá um nome
+## automático ao repetido, diferente em cada computador, e o online perde a mina de vista.
+func _add_object(node: Node2D, x: float, y: float, suffix := "") -> void:
 	node.position = Vector2(x, y + River.ROW_H / 2.0)
-	# nome pela linha do rio (no máximo 1 objeto por linha): igual nos dois computadores, para
-	# o online dizer "o objeto tal explodiu"
-	node.name = "o%d" % roundi(-y / River.ROW_H)
+	# nome pela linha do rio: igual nos dois computadores, para o online dizer "o objeto tal
+	# explodiu"
+	node.name = "o%d%s" % [roundi(-y / River.ROW_H), suffix]
 	if _gone.has(String(node.name)):  # o outro computador já destruiu (os sorteios acima continuam iguais)
 		node.free()
 		return
@@ -765,11 +811,33 @@ func restart_from_checkpoint() -> void:
 var _net_state_timer := 0.0
 ## Objetos que o outro computador destruiu antes de eles nascerem aqui (nome -> true)
 var _gone := {}
+## Sinal de vida: cada computador manda um `_net_ping` a cada NET_PING_INTERVAL. Sem ouvir o
+## outro por NET_TIMEOUT_MS, a conexão é dada como perdida. Só o aviso da rede demora 6–7 s na
+## rede local (medido, matando o processo do outro) e pode demorar mais na Steam; nesse tempo o
+## avião do outro fica congelado. Antes do 1º sinal a folga é NET_FIRST_TIMEOUT_MS (um
+## computador pode demorar mais para carregar a partida).
+const NET_PING_INTERVAL := 0.5
+const NET_TIMEOUT_MS := 4000
+const NET_FIRST_TIMEOUT_MS := 10000
+var _ping_timer := 0.0
+var _last_heard_ms := 0
+var _heard_once := false
 
 
 ## Manda o estado do avião deste computador (todo quadro) e, no anfitrião, placar e vidas
 ## (10 vezes por segundo).
 func _send_net_state(delta: float) -> void:
+	_ping_timer -= delta
+	if _ping_timer <= 0.0:
+		_ping_timer = NET_PING_INTERVAL
+		_net_ping.rpc()
+	if _last_heard_ms == 0:
+		_last_heard_ms = Time.get_ticks_msec()
+	var limit := NET_TIMEOUT_MS if _heard_once else NET_FIRST_TIMEOUT_MS
+	if Time.get_ticks_msec() - _last_heard_ms > limit:
+		_last_heard_ms = Time.get_ticks_msec() + 3600000  # avisa uma vez só
+		Online.node()._back_to_title.call_deferred("A CONEXÃO CAIU")
+		return
 	for p in players:
 		if not p.remote and not p.is_dead:
 			_net_player.rpc(p.number, p.position, p.sprite.animation, p.sprite.visible,
@@ -795,6 +863,13 @@ func _send_net_state(delta: float) -> void:
 							node.dive_t])
 			_net_state.rpc(scores, combos, timers, players.map(func(o: Player) -> int: return o.lives),
 					checkpoint_section, enemies)
+
+
+## Sinal de vida do outro computador (ver NET_TIMEOUT_MS).
+@rpc("any_peer", "unreliable")
+func _net_ping() -> void:
+	_last_heard_ms = Time.get_ticks_msec()
+	_heard_once = true
 
 
 @rpc("any_peer", "unreliable_ordered")
@@ -845,6 +920,20 @@ func _net_destroy(node_name: String, exploded: bool) -> void:
 		node.vanish(exploded)
 	else:
 		node.destroy()
+
+
+## Torre: o anfitrião acendeu o aviso (firing = false) ou disparou, mirando na direção `dir`
+## (o cano aponta para ela); o convidado repete (o projétil sai igual nos dois; a batida cada
+## um decide no próprio avião).
+@rpc("authority", "reliable")
+func _net_cannon(node_name: String, firing: bool, dir: Vector2) -> void:
+	var node := objects.get_node_or_null(NodePath(node_name))
+	if node is Enemy and not node.is_destroyed:
+		var cannon := node.get_node_or_null("Cannon") as Cannon
+		if cannon and firing:
+			cannon.fire(dir)
+		elif cannon:
+			cannon.warn(dir)
 
 
 @rpc("authority", "reliable")
